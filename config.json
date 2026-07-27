@@ -1,0 +1,10 @@
+{
+  "spreadsheetId": "1EJNUbC_dWZXcCCOHMkmEaq5uXsEhalCcqWFbiGYVDaY",
+  "sheetName": "constancias_trabajo (1)",
+  "apiKey": "",
+  "serviceAccountEmail": "",
+  "serviceAccountKey": "",
+  "cedulaColumn": "Cedula",
+  "fechaColumn": "Desde",
+  "useDemoData": false
+}
