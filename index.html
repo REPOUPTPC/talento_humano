@@ -9,6 +9,14 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons CDN -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <!-- PDFMake Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <!-- QR generation library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light text-dark min-vh-100 d-flex flex-column">
 
@@ -16,15 +24,16 @@
   <header class="bg-white border-bottom border-primary border-3 shadow-sm py-3 mb-4">
     <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
       <div class="d-flex align-items-center gap-3">
-        <img src="logo.jpg" alt="Logo UCT UPTPC" class="rounded-circle shadow-sm border border-primary border-2" style="width: 70px; height: 70px; object-fit: cover;">
+        <!-- Logo sin el círculo azul como fue solicitado -->
+        <img src="img/cyt.png" alt="Logo UCT UPTPC" style="height: 70px; max-width: 100%; object-fit: contain;">
         <div>
           <h1 class="h4 fw-bold text-primary mb-0" style="color: #003366 !important;">UNIDAD DE CIENCIA Y TECNOLOGÍA</h1>
-          <p class="text-secondary small mb-0 fw-semibold">UNIVERSIDAD POLITÉCNICA TERRITORIAL &bull; SISTEMA DE NOMINA</p>
+          <p class="text-secondary small mb-0 fw-semibold">UNIVERSIDAD POLITÉCNICA TERRITORIAL &bull; SISTEMA DE NOMINA Y GESTIÓN</p>
         </div>
       </div>
-      <div>
-        <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 rounded-pill fw-normal">
-          <i class="bi bi-github me-1"></i> Listo para GitHub Pages
+      <div class="d-flex align-items-center gap-2">
+        <span id="userRoleBadge" class="badge bg-secondary px-3 py-2 rounded-pill fw-semibold">
+          <i class="bi bi-person-badge me-1"></i> No Conectado
         </span>
       </div>
     </div>
@@ -33,25 +42,30 @@
   <!-- Contenedor Principal -->
   <main class="container flex-grow-1 pb-5">
 
-    <!-- Navegación por pestañas Bootstrap -->
+    <!-- Navegación por pestañas Bootstrap con navegación por Hash -->
     <ul class="nav nav-tabs border-primary mb-4" id="mainTab" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active fw-bold px-4" id="tab-consulta-btn" data-bs-toggle="tab" data-bs-target="#pane-consulta" type="button" role="tab">
+        <button class="nav-link active fw-bold px-3 px-md-4" id="tab-consulta-btn" data-bs-toggle="tab" data-bs-target="#pane-consulta" type="button" role="tab">
           <i class="bi bi-search me-1"></i> Consulta Individual
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold px-4" id="tab-masiva-btn" data-bs-toggle="tab" data-bs-target="#pane-masiva" type="button" role="tab">
+        <button class="nav-link fw-bold px-3 px-md-4" id="tab-masiva-btn" data-bs-toggle="tab" data-bs-target="#pane-masiva" type="button" role="tab">
           <i class="bi bi-table me-1"></i> Edición Masiva de Datos
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold px-4" id="tab-config-btn" data-bs-toggle="tab" data-bs-target="#pane-config" type="button" role="tab">
+        <button class="nav-link fw-bold px-3 px-md-4" id="tab-config-btn" data-bs-toggle="tab" data-bs-target="#pane-config" type="button" role="tab">
           <i class="bi bi-gear me-1"></i> Conexión a Google Sheets
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link fw-bold px-4" id="tab-instrucciones-btn" data-bs-toggle="tab" data-bs-target="#pane-instrucciones" type="button" role="tab">
+        <button class="nav-link fw-bold px-3 px-md-4" id="tab-estadisticas-btn" data-bs-toggle="tab" data-bs-target="#pane-estadisticas" type="button" role="tab">
+          <i class="bi bi-bar-chart-line me-1"></i> Estadísticas y Auditoría
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-bold px-3 px-md-4" id="tab-instrucciones-btn" data-bs-toggle="tab" data-bs-target="#pane-instrucciones" type="button" role="tab">
           <i class="bi bi-journal-code me-1"></i> Pasos de Instalación
         </button>
       </li>
@@ -63,18 +77,18 @@
         <i class="bi bi-info-circle-fill fs-5"></i>
         <div>
           <strong id="banner-title">Modo Demostración Activado</strong>
-          <span id="banner-text" class="d-block small">Utilizando datos locales de prueba. Para conectar tu hoja de Google Sheets ve a la pestaña "Conexión a Google Sheets".</span>
+          <span id="banner-text" class="d-block small">Utilizando datos locales de prueba. Para conectar tu hoja de Google Sheets ingresa las credenciales en "Conexión a Google Sheets".</span>
         </div>
       </div>
       <button class="btn btn-sm btn-outline-dark text-nowrap ms-2" onclick="document.getElementById('tab-config-btn').click();">
-        Configurar URL <i class="bi bi-arrow-right"></i>
+        Configurar Conexión <i class="bi bi-arrow-right"></i>
       </button>
     </div>
 
     <!-- PESTAÑAS (TAB PANES) -->
     <div class="tab-content" id="mainTabContent">
 
-      <!-- PESTAÑA 1: CONSULTA INDIVIDUAL Y EDICIÓN INDIVIDUAL -->
+      <!-- PESTAÑA 1: CONSULTA INDIVIDUAL -->
       <div class="tab-pane fade show active" id="pane-consulta" role="tabpanel">
         <div class="row g-4">
           <!-- Formulario de Consulta -->
@@ -85,20 +99,13 @@
               </div>
               <div class="card-body p-4">
                 <form id="form-consulta">
-                  <div class="mb-3">
+                  <div class="mb-4">
                     <label for="inputCedula" class="form-label fw-bold">Cédula de Identidad</label>
                     <div class="input-group">
                       <span class="input-group-text bg-light text-primary"><i class="bi bi-card-heading"></i></span>
-                      <input type="text" class="form-control" id="inputCedula" placeholder="Ej. 12345678" required>
+                      <input type="text" class="form-control" id="inputCedula" placeholder="Ej. 15949430 o V-15949430" autocomplete="off" required>
                     </div>
-                  </div>
-
-                  <div class="mb-4">
-                    <label for="inputFecha" class="form-label fw-bold">Fecha de Ingreso (Desde)</label>
-                    <div class="input-group">
-                      <span class="input-group-text bg-light text-primary"><i class="bi bi-calendar-date"></i></span>
-                      <input type="date" class="form-control" id="inputFecha" required>
-                    </div>
+                    <div class="form-text text-muted">Ingrese sólo el número o el formato V-00000000 (coincidencia exacta).</div>
                   </div>
 
                   <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm" id="btnBuscar">
@@ -113,17 +120,22 @@
           <!-- Resultado y Edición Individual -->
           <div class="col-lg-7">
             <div id="resultadoContainer" class="card shadow-sm border-0 rounded-3 d-none">
-              <div class="card-header bg-white border-bottom border-2 border-success d-flex align-items-center justify-content-between py-3">
+              <div class="card-header bg-white border-bottom border-2 border-success d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 py-3">
                 <div class="d-flex align-items-center gap-2">
                   <span class="badge bg-success-subtle text-success p-2 rounded-circle"><i class="bi bi-check-circle-fill fs-5"></i></span>
                   <div>
                     <h5 class="card-title text-success mb-0 fw-bold">Expediente Encontrado</h5>
-                    <small class="text-muted">Información del usuario registrada en la BD</small>
+                    <small class="text-muted">Información del trabajador registrada en la BD</small>
                   </div>
                 </div>
-                <button class="btn btn-outline-primary btn-sm fw-bold" id="btnEditarIndividual">
-                  <i class="bi bi-pencil-square me-1"></i> Editar este Expediente
-                </button>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-primary btn-sm fw-bold" id="btnEditarIndividual">
+                    <i class="bi bi-pencil-square me-1"></i> Editar
+                  </button>
+                  <button class="btn btn-success btn-sm fw-bold shadow-sm" id="btnGenerarPdfInd">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i> Descargar PDF
+                  </button>
+                </div>
               </div>
               <div class="card-body p-4">
                 <div class="row g-3" id="gridResultadoCampos">
@@ -138,7 +150,7 @@
                 <i class="bi bi-exclamation-triangle-fill fs-1"></i>
                 <div>
                   <h5 class="fw-bold mb-1">Sin Coincidencias</h5>
-                  <p class="mb-0 text-dark small" id="textErrorMsg">No se encontró ningún registro que coincida con la Cédula y Fecha de Ingreso introducidas.</p>
+                  <p class="mb-0 text-dark small" id="textErrorMsg">No se encontró ningún registro que coincida con la Cédula introducida.</p>
                 </div>
               </div>
             </div>
@@ -166,13 +178,13 @@
           <div class="card-body p-3">
 
             <div class="row mb-3 align-items-center">
-              <div class="col-md-6">
+              <div class="col-md-7">
                 <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-white"><i class="bi bi-funnel"></i></span>
-                  <input type="text" class="form-control" id="filterMasivoInput" placeholder="Filtrar por nombre, cédula, cargo, status...">
+                  <span class="input-group-text bg-white text-primary"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" id="filterMasivoInput" placeholder="Buscar por primer/segundo nombre, apellido o cédula (ej. V-12345678 ó 12345678)...">
                 </div>
               </div>
-              <div class="col-md-6 text-end">
+              <div class="col-md-5 text-end">
                 <small class="text-muted" id="countMasivoText">Total registros: 0</small>
               </div>
             </div>
@@ -182,7 +194,6 @@
                 <thead class="table-primary text-primary">
                   <tr id="headersTablaMasiva">
                     <th>#</th>
-                    <th>Documento</th>
                     <th>Cedula</th>
                     <th>Nombre</th>
                     <th>Categoria</th>
@@ -203,19 +214,37 @@
         </div>
       </div>
 
-      <!-- PESTAÑA 3: CONFIGURACIÓN DE GOOGLE SHEETS -->
+      <!-- PESTAÑA 3: CONFIGURACIÓN DE GOOGLE SHEETS & SEGURIDAD -->
       <div class="tab-pane fade" id="pane-config" role="tabpanel">
-        <div class="card shadow-sm border-0 rounded-3">
-          <div class="card-header bg-primary text-white py-3">
-            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-link-45deg me-2"></i>Conexión con Google Apps Script</h5>
+        <div class="card shadow-sm border-0 rounded-3 mb-4">
+          <div class="card-header bg-primary text-white py-3 d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-shield-lock-fill me-2"></i>Conexión a Google Sheets & Credenciales de Administrador</h5>
+            <span id="roleBadgeConfig" class="badge bg-light text-primary px-3 py-2 fw-bold">Rol: N/A</span>
           </div>
           <div class="card-body p-4">
 
             <form id="form-config">
               <div class="mb-3">
                 <label for="appScriptUrl" class="form-label fw-bold">URL de la Aplicación Web de Google Apps Script</label>
-                <input type="url" class="form-control" id="appScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+                <input type="url" class="form-control" id="appScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" required>
                 <div class="form-text">Pega la URL devuelta por Google Apps Script tras publicar el script como Aplicación Web.</div>
+              </div>
+
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label for="appScriptUser" class="form-label fw-bold">Usuario Administrador</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light text-primary"><i class="bi bi-person"></i></span>
+                    <input type="text" class="form-control" id="appScriptUser" placeholder="ej. admin" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="appScriptApiKey" class="form-label fw-bold">API Key / Token de Acceso</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-light text-primary"><i class="bi bi-key"></i></span>
+                    <input type="password" class="form-control" id="appScriptApiKey" placeholder="ej. admin123" required>
+                  </div>
+                </div>
               </div>
 
               <div class="mb-3 form-check form-switch">
@@ -225,10 +254,10 @@
 
               <div class="d-flex gap-2 justify-content-end">
                 <button type="button" class="btn btn-outline-secondary fw-bold" id="btnTestConn">
-                  <i class="bi bi-plug me-1"></i> Probar Conexión
+                  <i class="bi bi-plug me-1"></i> Probar Conexión & Validar Token
                 </button>
                 <button type="submit" class="btn btn-primary fw-bold">
-                  <i class="bi bi-save me-1"></i> Guardar Configuración
+                  <i class="bi bi-save me-1"></i> Guardar Credenciales
                 </button>
               </div>
             </form>
@@ -237,9 +266,168 @@
 
           </div>
         </div>
+
+        <!-- SECCIÓN SOLO VISIBLE PARA ROL SUPER_ADMIN: GESTIÓN DE ADMINISTRADORES -->
+        <div id="sec-admin-management" class="card shadow-sm border-0 rounded-3 d-none">
+          <div class="card-header bg-dark text-white py-3 d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0 fw-bold"><i class="bi bi-person-gear me-2"></i>Gestión de Usuarios Administradores (Exclusivo SUPER_ADMIN)</h5>
+            <span class="badge bg-warning text-dark px-3 py-1 fw-bold">Acceso Restringido</span>
+          </div>
+          <div class="card-body p-4">
+            
+            <form id="form-nuevo-admin" class="row g-3 mb-4 p-3 bg-light rounded-3 border">
+              <h6 class="fw-bold text-primary mb-1"><i class="bi bi-person-plus-fill me-1"></i> Registrar Nuevo Usuario Administrador</h6>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Nombre de Usuario</label>
+                <input type="text" class="form-control form-control-sm" id="newAdminUser" placeholder="ej. juan_perez" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">API Key / Token</label>
+                <input type="text" class="form-control form-control-sm" id="newAdminKey" placeholder="ej. token_secret_123" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Rol Asignado</label>
+                <select class="form-select form-select-sm" id="newAdminRol">
+                  <option value="ADMIN" selected>ADMIN (CRUD de Trabajadores)</option>
+                  <option value="SUPER_ADMIN">SUPER_ADMIN (Acceso Total + Gestión de Admins)</option>
+                </select>
+              </div>
+              <div class="col-12 text-end">
+                <button type="submit" class="btn btn-success btn-sm fw-bold" id="btnCrearAdmin">
+                  <i class="bi bi-check-circle me-1"></i> Guardar Nuevo Administrador
+                </button>
+              </div>
+            </form>
+
+            <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill me-1"></i> Administradores Registrados en la Pestaña `admin`</h6>
+            <div class="table-responsive border rounded-2">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Usuario</th>
+                    <th>API Key / Token</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="bodyTablaAdmins">
+                  <tr><td colspan="4" class="text-center text-muted py-3">Presione "Probar Conexión" para cargar la lista.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
       </div>
 
-      <!-- PESTAÑA 4: INSTRUCCIONES DE INSTALACIÓN -->
+      <!-- PESTAÑA 4: ESTADÍSTICAS Y AUDITORÍA -->
+      <div class="tab-pane fade" id="pane-estadisticas" role="tabpanel">
+        <div class="card shadow-sm border-0 rounded-3">
+          <div class="card-header bg-primary text-white py-3 d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+            <div>
+              <h5 class="card-title mb-0 fw-bold"><i class="bi bi-bar-chart-line-fill me-2"></i>Estadísticas y Registro de Auditoría</h5>
+              <small class="text-white-50">Métricas de conexión, constancias emitidas y reporte descargable</small>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-light text-primary btn-sm fw-bold" id="btnCargarEstadisticas">
+                <i class="bi bi-arrow-clockwise me-1"></i> Actualizar Métricas
+              </button>
+              <button class="btn btn-danger btn-sm fw-bold shadow-sm" id="btnExportarEstadisticasPdf">
+                <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar Reporte a PDF
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-4">
+
+            <!-- Filtro Rango de Fechas -->
+            <div class="card bg-light border-0 shadow-sm mb-4 rounded-3">
+              <div class="card-body p-3">
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-4 col-lg-3">
+                    <label for="statsFechaDesde" class="form-label small fw-bold text-secondary mb-1">
+                      <i class="bi bi-calendar-event me-1"></i>Fecha Desde:
+                    </label>
+                    <input type="date" class="form-control form-control-sm" id="statsFechaDesde">
+                  </div>
+                  <div class="col-md-4 col-lg-3">
+                    <label for="statsFechaHasta" class="form-label small fw-bold text-secondary mb-1">
+                      <i class="bi bi-calendar-event-fill me-1"></i>Fecha Hasta:
+                    </label>
+                    <input type="date" class="form-control form-control-sm" id="statsFechaHasta">
+                  </div>
+                  <div class="col-md-4 col-lg-6 d-flex gap-2">
+                    <button class="btn btn-primary btn-sm fw-bold" id="btnFiltrarStats">
+                      <i class="bi bi-funnel-fill me-1"></i> Aplicar Filtro
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm fw-bold" id="btnLimpiarFiltrarStats">
+                      <i class="bi bi-x-circle me-1"></i> Limpiar Fechas
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjetas KPIs -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-3">
+                <div class="p-3 bg-primary bg-opacity-10 border border-primary rounded-3 text-center">
+                  <span class="text-uppercase small fw-bold text-primary d-block mb-1">Total Consultas</span>
+                  <h3 class="fw-bold text-primary mb-0" id="kpiTotalConsultas">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 bg-success bg-opacity-10 border border-success rounded-3 text-center">
+                  <span class="text-uppercase small fw-bold text-success d-block mb-1">Consultas ADMIN</span>
+                  <h3 class="fw-bold text-success mb-0" id="kpiConsultasAdmin">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 bg-info bg-opacity-10 border border-info rounded-3 text-center">
+                  <span class="text-uppercase small fw-bold text-info d-block mb-1">Consultas WEB</span>
+                  <h3 class="fw-bold text-info mb-0" id="kpiConsultasWeb">0</h3>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="p-3 bg-dark bg-opacity-10 border border-dark rounded-3 text-center">
+                  <span class="text-uppercase small fw-bold text-dark d-block mb-1">Trabajadores BD</span>
+                  <h3 class="fw-bold text-dark mb-0" id="kpiTotalTrabajadores">0</h3>
+                </div>
+              </div>
+            </div>
+
+            <!-- Gráfico Chart.js -->
+            <div class="card border mb-4">
+              <div class="card-header bg-light py-2 fw-bold text-secondary">
+                <i class="bi bi-pie-chart-fill me-1"></i> Distribución de Consultas (ADMIN vs WEB Pública)
+              </div>
+              <div class="card-body p-3" style="max-height: 320px; position: relative;">
+                <canvas id="chartConsultas" style="max-height: 280px;"></canvas>
+              </div>
+            </div>
+
+            <!-- Tabla de Logs de la hoja consultas -->
+            <h6 class="fw-bold text-dark mb-2"><i class="bi bi-journal-text me-1"></i> Últimos Registros en Hoja `consultas`</h6>
+            <div class="table-responsive border rounded-2" style="max-height: 250px; overflow-y: auto;">
+              <table class="table table-sm table-striped align-middle mb-0">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Cédula / Consultado</th>
+                    <th>IP</th>
+                    <th>Fecha / Hora</th>
+                  </tr>
+                </thead>
+                <tbody id="bodyTablaConsultas">
+                  <tr><td colspan="4" class="text-center text-muted py-3">Cargando registros de auditoría...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 5: INSTRUCCIONES DE INSTALACIÓN Y CÓDIGO BACKEND -->
       <div class="tab-pane fade" id="pane-instrucciones" role="tabpanel">
         <div class="card shadow-sm border-0 rounded-3">
           <div class="card-header bg-primary text-white py-3">
@@ -250,7 +438,7 @@
             <div class="timeline">
               <div class="mb-4">
                 <h5 class="fw-bold text-primary"><span class="badge bg-primary rounded-circle me-2">1</span>Abre tu Hoja de Google Sheets</h5>
-                <p class="ms-4 text-muted">Asegúrate de que la primera fila contenga los encabezados exactos: <code>Documento</code>, <code>Cedula</code>, <code>Nombre</code>, <code>Categoria</code>, <code>Cargo</code>, <code>Desde</code>, <code>RemuneracionMensual</code>, <code>Codigo</code>, <code>Status</code>.</p>
+                <p class="ms-4 text-muted">Asegúrate de que la primera pestaña se llame <code>constancias_trabajo</code> y tenga los encabezados: <code>Documento</code>, <code>Cedula</code>, <code>Nombre</code>, <code>Categoria</code>, <code>Cargo</code>, <code>Desde</code>, <code>RemuneracionMensual</code>, <code>Codigo</code>, <code>Status</code>.</p>
               </div>
 
               <div class="mb-4">
@@ -259,70 +447,427 @@
               </div>
 
               <div class="mb-4">
-                <h5 class="fw-bold text-primary"><span class="badge bg-primary rounded-circle me-2">3</span>Pega el siguiente Código backend (`Code.gs`)</h5>
+                <h5 class="fw-bold text-primary"><span class="badge bg-primary rounded-circle me-2">3</span>Pega el siguiente Código backend unificado (`Code.gs`)</h5>
                 <div class="ms-4">
                   <div class="position-relative">
-                    <pre class="bg-dark text-light p-3 rounded-3 small" style="max-height: 250px; overflow-y: auto;"><code id="codeGsText">
-// Código de Google Apps Script para consulta y edición
+                    <pre class="bg-dark text-light p-3 rounded-3 small" style="max-height: 350px; overflow-y: auto;"><code id="codeGsText">
+/**
+ * Google Apps Script - Backend API Unificado para Consulta, Edición, Constancias y Seguridad
+ * UPTC - Unidad de Ciencia y Tecnología / Talento Humano
+ */
+
 function doGet(e) {
-  var params = e.parameter;
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  
-  if (params.action === 'readAll') {
-    var rows = [];
-    for (var i = 1; i < data.length; i++) {
-      var obj = {};
-      for (var j = 0; j < headers.length; j++) { obj[headers[j]] = data[i][j]; }
-      obj["_rowIndex"] = i + 1;
-      rows.push(obj);
+  try {
+    var params = (e && e.parameter) ? e.parameter : {};
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    
+    var mainSheet = ss.getSheetByName("constancias_trabajo") || ss.getSheets()[0];
+    var data = mainSheet.getDataRange().getValues();
+    var headers = data.length > 0 ? data[0].map(function(h) { return String(h).trim(); }) : [];
+
+    var adminSheet = ss.getSheetByName("admin");
+    if (!adminSheet) {
+      adminSheet = ss.insertSheet("admin");
+      adminSheet.appendRow(["usuario", "api_key", "rol", "status"]);
+      adminSheet.appendRow(["admin", "admin123", "SUPER_ADMIN", "ACTIVO"]);
     }
-    return ContentService.createTextOutput(JSON.stringify({ success: true, headers: headers, data: rows })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  // Buscar por Cedula y Desde
-  var cedula = params.cedula || '';
-  var fecha = params.fecha || '';
-  for (var k = 1; k < data.length; k++) {
-    if (String(data[k][1]).trim() === cedula.trim()) {
-      var res = {};
-      for (var m = 0; m < headers.length; m++) { res[headers[m]] = data[k][m]; }
-      res["_rowIndex"] = k + 1;
-      return ContentService.createTextOutput(JSON.stringify({ success: true, data: res })).setMimeType(ContentService.MimeType.JSON);
+    
+    var adminData = adminSheet.getDataRange().getValues();
+    
+    function authCheck(usr, key) {
+      if (!usr || !key) return null;
+      var normUsr = String(usr).trim().toLowerCase();
+      var normKey = String(key).trim();
+      
+      for (var a = 1; a < adminData.length; a++) {
+        var rowUsr = String(adminData[a][0] || "").trim().toLowerCase();
+        var rowKey = String(adminData[a][1] || "").trim();
+        var rowRol = String(adminData[a][2] || "ADMIN").trim().toUpperCase();
+        var rowStatus = String(adminData[a][3] || "ACTIVO").trim().toUpperCase();
+        
+        if (rowUsr === normUsr && rowKey === normKey && rowStatus === "ACTIVO") {
+          return { usuario: adminData[a][0], rol: rowRol };
+        }
+      }
+      return null;
     }
+
+    if (params.busqueda !== undefined) {
+      var terminoRaw = params.busqueda ? String(params.busqueda).trim() : '';
+      var terminoNorm = normalizeClean(terminoRaw);
+      if (!terminoNorm) return jsonResponse([]);
+
+      var colCedula = findColumnIndexFlex(headers, ["cedula", "dni", "identificacion"]);
+      var colCodigo = findColumnIndexFlex(headers, ["codigo", "serial", "cod"]);
+      var colNombre = findColumnIndexFlex(headers, ["nombre", "empleado", "trabajador"]);
+      var colCategoria = findColumnIndexFlex(headers, ["categoria", "cat"]);
+      var colCargo = findColumnIndexFlex(headers, ["cargo"]);
+      var colDesde = findColumnIndexFlex(headers, ["desde", "ingreso", "fecha"]);
+      var colRemuneracion = findColumnIndexFlex(headers, ["remuneracion", "sueldo", "salario", "mensual"]);
+      var colDocumento = findColumnIndexFlex(headers, ["documento", "doc"]);
+      var colStatus = findColumnIndexFlex(headers, ["status", "estatus", "estado"]);
+
+      var resultados = [];
+
+      for (var r = 1; r < data.length; r++) {
+        var row = data[r];
+        var cedulaVal = colCedula !== -1 ? row[colCedula] : "";
+        var codigoVal = colCodigo !== -1 ? row[colCodigo] : "";
+
+        var cedulaNorm = normalizeClean(cedulaVal);
+        var codigoNorm = normalizeClean(codigoVal);
+
+        var cedulaOnlyDigits = cedulaNorm.replace(/^V|^E/, "");
+        var terminoOnlyDigits = terminoNorm.replace(/^V|^E/, "");
+
+        var esCoincidencia = (cedulaNorm && (cedulaNorm === terminoNorm || cedulaOnlyDigits === terminoOnlyDigits)) ||
+                             (codigoNorm && codigoNorm === terminoNorm);
+
+        if (esCoincidencia) {
+          var desdeVal = colDesde !== -1 ? row[colDesde] : "";
+          desdeVal = formatDateDDMMAAAA(desdeVal);
+          
+          var remVal = colRemuneracion !== -1 ? row[colRemuneracion] : "";
+          remVal = formatRemuneracionBs(remVal);
+
+          var empNombre = colNombre !== -1 ? String(row[colNombre] || "") : "";
+          var empCedula = String(cedulaVal || "").trim();
+
+          var usuarioAudit = params.usuario ? String(params.usuario).trim() : empNombre;
+          if (!usuarioAudit) usuarioAudit = "WEB_PUBLIC";
+          logConsulta(ss, usuarioAudit, empCedula, e);
+
+          resultados.push({
+            Documento: colDocumento !== -1 ? String(row[colDocumento] || "") : "",
+            Cedula: empCedula,
+            Nombre: empNombre,
+            Categoria: colCategoria !== -1 ? String(row[colCategoria] || "") : "",
+            Cargo: colCargo !== -1 ? String(row[colCargo] || "") : "",
+            Desde: desdeVal,
+            RemuneracionMensual: remVal,
+            Codigo: String(codigoVal || "").trim(),
+            Status: colStatus !== -1 ? String(row[colStatus] || "") : ""
+          });
+        }
+      }
+
+      return jsonResponse(resultados);
+    }
+
+    var userAuth = authCheck(params.usuario, params.api_key);
+    if (!userAuth && params.action !== 'validateAuth') {
+      return jsonResponse({ status: "error", message: "Acceso no autorizado" });
+    }
+
+    if (params.action === 'validateAuth') {
+      if (!userAuth) {
+        return jsonResponse({ status: "error", success: false, message: "Usuario o API Key inválidos." });
+      }
+      return jsonResponse({ status: "success", success: true, usuario: userAuth.usuario, rol: userAuth.rol });
+    }
+
+    if (params.action === 'getStats') {
+      var sheetConsultas = ss.getSheetByName("consultas");
+      var logsData = sheetConsultas ? sheetConsultas.getDataRange().getValues() : [];
+      var logsList = [];
+      if (logsData.length > 1) {
+        for (var l = 1; l < logsData.length; l++) {
+          logsList.push({
+            usuario: String(logsData[l][0] || ''),
+            consultado: String(logsData[l][1] || ''),
+            ip: String(logsData[l][2] || ''),
+            fecha: formatDateDDMMAAAA(logsData[l][3])
+          });
+        }
+      }
+      return jsonResponse({
+        success: true,
+        totalRegistros: Math.max(0, data.length - 1),
+        totalConsultas: logsList.length,
+        consultasLogs: logsList
+      });
+    }
+
+    if (params.action === 'listAdmins') {
+      if (userAuth.rol !== 'SUPER_ADMIN') {
+        return jsonResponse({ status: "error", message: "Se requiere rol SUPER_ADMIN" });
+      }
+      var adminList = [];
+      for (var ad = 1; ad < adminData.length; ad++) {
+        adminList.push({
+          usuario: adminData[ad][0],
+          api_key: adminData[ad][1],
+          rol: adminData[ad][2],
+          status: adminData[ad][3]
+        });
+      }
+      return jsonResponse({ success: true, admins: adminList });
+    }
+
+    if (params.action === 'readAll') {
+      var rows = [];
+      for (var i = 1; i < data.length; i++) {
+        var rowObj = {};
+        for (var j = 0; j < headers.length; j++) {
+          var headerName = headers[j];
+          var cellVal = data[i][j];
+          if (headerName.toLowerCase().indexOf("desde") !== -1 || headerName.toLowerCase().indexOf("fecha") !== -1) {
+            rowObj[headerName] = formatDateDDMMAAAA(cellVal);
+          } else if (headerName.toLowerCase().indexOf("remuneracion") !== -1 || headerName.toLowerCase().indexOf("sueldo") !== -1) {
+            rowObj[headerName] = formatRemuneracionBs(cellVal);
+          } else {
+            rowObj[headerName] = cellVal;
+          }
+        }
+        rowObj["_rowIndex"] = i + 1;
+        rows.push(rowObj);
+      }
+      return jsonResponse({ success: true, headers: headers, data: rows, usuario: userAuth.usuario, rol: userAuth.rol });
+    }
+
+    var cedula = params.cedula || '';
+    if (cedula) {
+      var cedulaIdx = findColumnIndexFlex(headers, ["cedula", "dni", "identificacion"]);
+      if (cedulaIdx === -1) cedulaIdx = 1;
+      var normInputCedula = normalizeClean(cedula);
+      var normInputDigits = normInputCedula.replace(/^V|^E/, "");
+
+      for (var k = 1; k < data.length; k++) {
+        var rowVal = data[k];
+        var rowCedulaNorm = normalizeClean(rowVal[cedulaIdx]);
+        var rowCedulaDigits = rowCedulaNorm.replace(/^V|^E/, "");
+
+        if (rowCedulaNorm === normInputCedula || (normInputDigits && rowCedulaDigits === normInputDigits)) {
+          var resultObj = {};
+          for (var m = 0; m < headers.length; m++) {
+            var hName = headers[m];
+            var valM = rowVal[m];
+            if (hName.toLowerCase().indexOf("desde") !== -1 || hName.toLowerCase().indexOf("fecha") !== -1) {
+              resultObj[hName] = formatDateDDMMAAAA(valM);
+            } else if (hName.toLowerCase().indexOf("remuneracion") !== -1 || hName.toLowerCase().indexOf("sueldo") !== -1) {
+              resultObj[hName] = formatRemuneracionBs(valM);
+            } else {
+              resultObj[hName] = valM;
+            }
+          }
+          resultObj["_rowIndex"] = k + 1;
+          logConsulta(ss, "ADMIN (" + userAuth.usuario + ")", String(rowVal[cedulaIdx]).trim(), e);
+          return jsonResponse({ success: true, data: resultObj });
+        }
+      }
+      return jsonResponse({ success: false, message: "No se encontró ningún registro coincidente." });
+    }
+
+    return jsonResponse({ status: "error", message: "Parámetros de consulta no válidos." });
+
+  } catch (error) {
+    return jsonResponse({ status: "error", success: false, error: error.message });
   }
-  return ContentService.createTextOutput(JSON.stringify({ success: false, message: "No encontrado" })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  var contents = JSON.parse(e.postData.contents);
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(function(h) { return String(h).trim(); });
-  
-  if (contents.action === 'updateRow') {
-    var rIndex = contents.rowIndex;
-    var rowData = contents.data;
-    for (var c = 0; c < headers.length; c++) {
-      if (rowData.hasOwnProperty(headers[c])) {
-        sheet.getRange(rIndex, c + 1).setValue(rowData[headers[c]]);
+  try {
+    var contents = JSON.parse(e.postData.contents);
+    var action = contents.action;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var mainSheet = ss.getSheetByName("constancias_trabajo") || ss.getSheets()[0];
+    var data = mainSheet.getDataRange().getValues();
+    var headers = data[0].map(function(h) { return String(h).trim(); });
+
+    var adminSheet = ss.getSheetByName("admin");
+    if (!adminSheet) {
+      return jsonResponse({ status: "error", message: "Acceso no autorizado" });
+    }
+    
+    var adminData = adminSheet.getDataRange().getValues();
+    var normUsr = String(contents.usuario || "").trim().toLowerCase();
+    var normKey = String(contents.api_key || "").trim();
+    var authUser = null;
+
+    for (var a = 1; a < adminData.length; a++) {
+      if (String(adminData[a][0] || "").trim().toLowerCase() === normUsr &&
+          String(adminData[a][1] || "").trim() === normKey &&
+          String(adminData[a][3] || "ACTIVO").trim().toUpperCase() === "ACTIVO") {
+        authUser = { usuario: adminData[a][0], rol: String(adminData[a][2] || "ADMIN").trim().toUpperCase() };
+        break;
       }
     }
-    return ContentService.createTextOutput(JSON.stringify({ success: true })).setMimeType(ContentService.MimeType.JSON);
-  }
-  
-  if (contents.action === 'updateBulk') {
-    contents.rows.forEach(function(item) {
-      var rIdx = item.rowIndex;
-      for (var col = 0; col < headers.length; col++) {
-        if (item.data.hasOwnProperty(headers[col])) {
-          sheet.getRange(rIdx, col + 1).setValue(item.data[headers[col]]);
+
+    if (!authUser) {
+      return jsonResponse({ status: "error", message: "Acceso no autorizado" });
+    }
+
+    if (action === 'addAdmin') {
+      if (authUser.rol !== 'SUPER_ADMIN') {
+        return jsonResponse({ status: "error", message: "Acceso denegado. Se requiere rol SUPER_ADMIN." });
+      }
+      var nuevoUsr = String(contents.new_usuario || "").trim();
+      var nuevoKey = String(contents.new_api_key || "").trim();
+      var nuevoRol = String(contents.new_rol || "ADMIN").trim().toUpperCase();
+
+      if (!nuevoUsr || !nuevoKey) {
+        return jsonResponse({ success: false, error: "Usuario y API Key son obligatorios." });
+      }
+
+      adminSheet.appendRow([nuevoUsr, nuevoKey, nuevoRol, "ACTIVO"]);
+      return jsonResponse({ success: true, message: "Administrador " + nuevoUsr + " registrado exitosamente." });
+    }
+
+    if (action === 'updateRow') {
+      var rowIndex = contents.rowIndex;
+      var updatedData = contents.data;
+      
+      if (!rowIndex || rowIndex < 2 || rowIndex > data.length) {
+        var cedulaVal = updatedData["Cedula"] || updatedData["cedula"];
+        var cedulaIdx = findColumnIndexFlex(headers, ["cedula", "dni"]);
+        
+        for (var r = 1; r < data.length; r++) {
+          if (normalizeClean(data[r][cedulaIdx]) === normalizeClean(cedulaVal)) {
+            rowIndex = r + 1;
+            break;
+          }
         }
       }
-    });
-    return ContentService.createTextOutput(JSON.stringify({ success: true })).setMimeType(ContentService.MimeType.JSON);
+      
+      if (!rowIndex) {
+        return jsonResponse({ success: false, error: "No se pudo identificar la fila a actualizar." });
+      }
+      
+      for (var c = 0; c < headers.length; c++) {
+        var headerName = headers[c];
+        if (updatedData.hasOwnProperty(headerName)) {
+          var valToSave = updatedData[headerName];
+          if (headerName.toLowerCase().indexOf("desde") !== -1 || headerName.toLowerCase().indexOf("fecha") !== -1) {
+            valToSave = formatDateDDMMAAAA(valToSave);
+          } else if (headerName.toLowerCase().indexOf("remuneracion") !== -1 || headerName.toLowerCase().indexOf("sueldo") !== -1) {
+            valToSave = formatRemuneracionBs(valToSave);
+          }
+          mainSheet.getRange(rowIndex, c + 1).setValue(valToSave);
+        }
+      }
+      
+      return jsonResponse({ success: true, message: "Expediente actualizado exitosamente." });
+    }
+    
+    if (action === 'updateBulk') {
+      var updatedRows = contents.rows;
+      if (!Array.isArray(updatedRows)) {
+        return jsonResponse({ success: false, error: "Formato de datos masivos no válido." });
+      }
+      
+      var cedulaIdxBulk = findColumnIndexFlex(headers, ["cedula", "dni"]);
+      
+      updatedRows.forEach(function(item) {
+        var rIndex = item.rowIndex;
+        var rowValues = item.data;
+        
+        if (!rIndex && rowValues) {
+          var cVal = rowValues["Cedula"] || rowValues["cedula"];
+          for (var idx = 1; idx < data.length; idx++) {
+            if (normalizeClean(data[idx][cedulaIdxBulk]) === normalizeClean(cVal)) {
+              rIndex = idx + 1;
+              break;
+            }
+          }
+        }
+        
+        if (rIndex && rIndex >= 2 && rIndex <= data.length + 1) {
+          for (var col = 0; col < headers.length; col++) {
+            var hName = headers[col];
+            if (rowValues.hasOwnProperty(hName)) {
+              var valBulk = rowValues[hName];
+              if (hName.toLowerCase().indexOf("desde") !== -1 || hName.toLowerCase().indexOf("fecha") !== -1) {
+                valBulk = formatDateDDMMAAAA(valBulk);
+              } else if (hName.toLowerCase().indexOf("remuneracion") !== -1 || hName.toLowerCase().indexOf("sueldo") !== -1) {
+                valBulk = formatRemuneracionBs(valBulk);
+              }
+              mainSheet.getRange(rIndex, col + 1).setValue(valBulk);
+            }
+          }
+        }
+      });
+      
+      return jsonResponse({ success: true, message: "Actualización masiva realizada correctamente." });
+    }
+    
+    return jsonResponse({ status: "error", error: "Acción no reconocida." });
+    
+  } catch (error) {
+    return jsonResponse({ status: "error", success: false, error: error.message });
   }
+}
+
+function logConsulta(ss, usuario, consultado, e) {
+  try {
+    var sheet = ss.getSheetByName("consultas");
+    if (!sheet) {
+      sheet = ss.insertSheet("consultas");
+      sheet.appendRow(["usuario", "consultado", "ip", "fecha"]);
+    }
+    var ip = (e && e.parameter && e.parameter.ip) ? e.parameter.ip : "127.0.0.1";
+    var fechaNow = new Date();
+    var fechaStr = formatDateDDMMAAAA(fechaNow) + " " + Utilities.formatDate(fechaNow, ss.getSpreadsheetTimeZone(), "HH:mm:ss");
+    
+    sheet.appendRow([
+      String(usuario || "ADMIN").trim(),
+      String(consultado || "").trim(),
+      String(ip).trim(),
+      fechaStr
+    ]);
+  } catch (err) {}
+}
+
+function formatDateDDMMAAAA(val) {
+  if (val === null || val === undefined || val === '') return '';
+  if (val instanceof Date) {
+    var year = val.getUTCFullYear();
+    var month = String(val.getUTCMonth() + 1).padStart(2, '0');
+    var day = String(val.getUTCDate()).padStart(2, '0');
+    return day + '/' + month + '/' + year;
+  }
+  var str = String(val).trim();
+  if (!str) return '';
+  var isoMatch = str.match(/^(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})/);
+  if (isoMatch) {
+    return isoMatch[3].padStart(2, '0') + '/' + isoMatch[2].padStart(2, '0') + '/' + isoMatch[1];
+  }
+  return str;
+}
+
+function formatRemuneracionBs(val) {
+  if (val === null || val === undefined || val === '') return '0,00 Bs';
+  var str = String(val).replace(/[^\d,.-]/g, '').replace(',', '.');
+  var num = parseFloat(str) || 0;
+  var partes = num.toFixed(2).split('.');
+  var enteras = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return enteras + "," + partes[1] + " Bs";
+}
+
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function normalizeClean(val) {
+  if (val === null || val === undefined) return '';
+  var str = String(val).trim().toUpperCase();
+  str = str.replace(/[ÁÀÄÂ]/g, "A")
+           .replace(/[ÉÈËÊ]/g, "E")
+           .replace(/[ÍÌÏÎ]/g, "I")
+           .replace(/[ÓÒÖÔ]/g, "O")
+           .replace(/[ÚÙÜÛ]/g, "U");
+  return str.replace(/[^A-Z0-9]/g, "");
+}
+
+function findColumnIndexFlex(headers, keywords) {
+  for (var i = 0; i < headers.length; i++) {
+    var hNorm = normalizeClean(headers[i]);
+    for (var k = 0; k < keywords.length; k++) {
+      var keyNorm = normalizeClean(keywords[k]);
+      if (hNorm.indexOf(keyNorm) !== -1) return i;
+    }
+  }
+  return -1;
 }
                     </code></pre>
                   </div>
@@ -341,6 +886,37 @@ function doPost(e) {
 
     </div>
   </main>
+
+  <!-- MODAL OBLIGATORIO DE CREDENCIALES (SE MUESTRA SI FALTA CONFIGURACIÓN) -->
+  <div class="modal fade" id="modalCredencialesRequeridas" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2"></i>Credenciales de Conexión Requeridas</h5>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">Para acceder a las funciones administrativas del sistema, por favor ingresa la <strong>URL de Apps Script</strong>, tu <strong>Usuario</strong> y tu <strong>API Key</strong> asignada.</p>
+          <form id="form-modal-credenciales">
+            <div class="mb-3">
+              <label class="form-label fw-bold small">URL de Google Apps Script</label>
+              <input type="url" class="form-control" id="modalInputUrl" placeholder="https://script.google.com/macros/s/.../exec" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Usuario Administrador</label>
+              <input type="text" class="form-control" id="modalInputUser" placeholder="ej. admin" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">API Key / Token de Acceso</label>
+              <input type="password" class="form-control" id="modalInputApiKey" placeholder="ej. admin123" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
+              <i class="bi bi-key-fill me-1"></i> Conectar al Sistema
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL DE EDICIÓN INDIVIDUAL -->
   <div class="modal fade" id="modalEdicionIndividual" tabindex="-1" aria-hidden="true">
@@ -365,6 +941,18 @@ function doPost(e) {
             <i class="bi bi-check-circle me-1"></i> Guardar Cambios en Google Sheets
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OVERLAY BARRA DE CARGA PDF -->
+  <div id="pdfLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:99999; align-items:center; justify-content:center;">
+    <div class="card shadow-lg border-0 rounded-4 text-center p-4" style="max-width: 420px; width: 90%; background: #ffffff;">
+      <div class="spinner-border text-primary mb-3 mx-auto" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+      <h5 class="fw-bold text-primary mb-2" id="pdfProgressTitle">Generando Constancia PDF...</h5>
+      <p class="text-muted small mb-3" id="pdfProgressText">Procesando datos y preparando documento. Por favor espere.</p>
+      <div class="progress" style="height: 12px; border-radius: 6px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="pdfProgressBar" role="progressbar" style="width: 15%"></div>
       </div>
     </div>
   </div>

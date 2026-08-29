@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Talento Humano - UPTC</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- PDFMake Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <!-- PDFMake fonts (vfs) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <!-- QR generation library (browser build) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+        }
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .btn-buscar {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            font-weight: bold;
+        }
+        .btn-buscar:hover {
+            background-color: #0b5ed7;
+        }
+        .img-logo {
+            max-height: 60px;
+            margin-bottom: 20px;
+        }
+        #fechaContainer {
+            display: none;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1>Consulta de Empleados</h1>
+            <p class="text-muted">Ingrese su Serial (14 caracteres) o Cédula</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="busqueda" class="form-label fw-bold">Número de Serial o Cédula</label>
+                    <input type="text" class="form-control text-uppercase" id="busqueda" placeholder="Ej: ABCD1234ABCD o V-12345678" autocomplete="off">
+                    <div id="feedback" class="form-text text-muted"></div>
+                </div>
+
+                <div id="fechaContainer">
+                    <label for="fecha" class="form-label fw-bold">Fecha de Ingreso</label>
+                    <input type="date" class="form-control" id="fecha">
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-buscar btn-primary">
+                        <i class="bi bi-search"></i> Buscar Empleado
+                    </button>
+                </div>
+
+                <div id="resultados" class="mt-4">
+                    <!-- Los resultados aparecerán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de la URL del Web App de Google Apps Script
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj54Xv54pt7gGvQP-xtv1cb5VotlaxyTs-p_vncMUJjb6KfwZlPRZjLULUNtBqUFTB/exec';
+
+        // URLs de las imágenes
+        const URL_IMAGEN_CABECERA = 'https://i.ibb.co/Y438vY9q/cabecera.png';
+        const URL_IMAGEN_TALENTO = 'https://i.ibb.co/r29PSQ3Y/logo-talento-humano.png';
+        const URL_IMAGEN_QR = 'https://i.ibb.co/jk6n1MzS/QR.png';
+
+        function normalizeCleanJS(val) {
+            if (!val) return '';
+            let str = String(val).trim().toUpperCase();
+            str = str.replace(/[ÁÀÄÂ]/g, "A")
+                     .replace(/[ÉÈËÊ]/g, "E")
+                     .replace(/[ÍÌÏÎ]/g, "I")
+                     .replace(/[ÓÒÖÔ]/g, "O")
+                     .replace(/[ÚÙÜÛ]/g, "U");
+            return str.replace(/[^A-Z0-9]/g, "");
+        }
+
+        function parseFechaStandard(str) {
+            if (!str) return null;
+            if (str instanceof Date) return str;
+            const s = String(str).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                const [y, m, d] = s.split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            const parts = s.split(/[\/\-\.]/).map(Number);
+            if (parts.length === 3) {
+                if (parts[0] > 12) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                if (parts[2] > 1000) {
+                    return new Date(parts[2], parts[0] - 1, parts[1]);
+                }
+            }
+            return new Date(s);
+        }
+
+        function formatearRemuneracion(valor) {
+            const limpio = String(valor ?? '0').replace(/[^\d,.-]/g, '');
+            const numero = parseFloat(limpio.replace(',', '.')) || 0;
+            return Number(numero.toFixed(2)).toString();
+        }
+
+        // --- Lógica de conversión de números a letras ---
+        function NumeroALetras(num) {
+            let data = {
+                numero: num,
+                enteros: Math.floor(num),
+                centavos: Math.round((num - Math.floor(num)) * 100),
+                letrasCentavos: "",
+                letrasMonedaPlural: 'BOLIVARES',
+                letrasMonedaSingular: 'BOLIVAR',
+                letrasMonedaCentavoPlural: "CENTIMOS",
+                letrasMonedaCentavoSingular: "CENTIMO"
+            };
+
+            function Unidades(num) {
+                switch (num) {
+                    case 1: return "UN";
+                    case 2: return "DOS";
+                    case 3: return "TRES";
+                    case 4: return "CUATRO";
+                    case 5: return "CINCO";
+                    case 6: return "SEIS";
+                    case 7: return "SIETE";
+                    case 8: return "OCHO";
+                    case 9: return "NUEVE";
+                }
+                return "";
+            }
+
+            function Decenas(num) {
+                let decena = Math.floor(num / 10);
+                let unidad = num - (decena * 10);
+
+                switch (decena) {
+                    case 1:
+                        switch (unidad) {
+                            case 0: return "DIEZ";
+                            case 1: return "ONCE";
+                            case 2: return "DOCE";
+                            case 3: return "TRECE";
+                            case 4: return "CATORCE";
+                            case 5: return "QUINCE";
+                            default: return "DIECI" + Unidades(unidad);
+                        }
+                    case 2:
+                        switch (unidad) {
+                            case 0: return "VEINTE";
+                            default: return "VEINTI" + Unidades(unidad);
+                        }
+                    case 3: return DecenasY("TREINTA", unidad);
+                    case 4: return DecenasY("CUARENTA", unidad);
+                    case 5: return DecenasY("CINCUENTA", unidad);
+                    case 6: return DecenasY("SESENTA", unidad);
+                    case 7: return DecenasY("SETENTA", unidad);
+                    case 8: return DecenasY("OCHENTA", unidad);
+                    case 9: return DecenasY("NOVENTA", unidad);
+                    case 0: return Unidades(unidad);
+                }
+            }
+
+            function DecenasY(strSin, numUnidades) {
+                if (numUnidades > 0)
+                    return strSin + " Y " + Unidades(numUnidades);
+                return strSin;
+            }
+
+            function Centenas(num) {
+                let centenas = Math.floor(num / 100);
+                let decenas = num - (centenas * 100);
+
+                switch (centenas) {
+                    case 1:
+                        if (decenas > 0)
+                            return "CIENTO " + Decenas(decenas);
+                        return "CIEN";
+                    case 2: return "DOSCIENTOS " + Decenas(decenas);
+                    case 3: return "TRESCIENTOS " + Decenas(decenas);
+                    case 4: return "CUATROCIENTOS " + Decenas(decenas);
+                    case 5: return "QUINIENTOS " + Decenas(decenas);
+                    case 6: return "SEISCIENTOS " + Decenas(decenas);
+                    case 7: return "SETECIENTOS " + Decenas(decenas);
+                    case 8: return "OCHOCIENTOS " + Decenas(decenas);
+                    case 9: return "NOVECIENTOS " + Decenas(decenas);
+                }
+                return Decenas(decenas);
+            }
+
+            function Seccion(num, divisor, strSingular, strPlural) {
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let letras = "";
+
+                if (cientos > 0) {
+                    if (cientos > 1)
+                        letras = Centenas(cientos) + " " + strPlural;
+                    else
+                        letras = strSingular;
+                }
+
+                if (resto > 0)
+                    letras += " " + Centenas(resto);
+
+                return letras;
+            }
+
+            function Miles(num) {
+                let divisor = 1000;
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let strMiles = Seccion(cientos, 1, "UN MIL", "MIL");
+                let strCentenas = Centenas(resto);
+
+                if (strMiles === "")
+                    return strCentenas;
+
+                return strMiles + " " + strCentenas;
+            }
+
+            function Millones(num) {
+                let divisor = 1000000;
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let strMillones = Seccion(cientos, 1, "UN MILLON", "MILLONES");
+                let strMiles = Miles(resto);
+
+                if (strMillones === "")
+                    return strMiles;
+
+                return strMillones + " " + strMiles;
+            }
+
+            if (data.centavos > 0) {
+                data.letrasCentavos = "CON " + (function () {
+                    if (data.centavos == 1)
+                        return Decenas(data.centavos) + " " + data.letrasMonedaCentavoSingular;
+                    else
+                        return Decenas(data.centavos) + " " + data.letrasMonedaCentavoPlural;
+                })();
+            }
+
+            if (data.enteros == 0)
+                return "CERO " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+            if (data.enteros == 1)
+                return Millones(data.enteros) + " " + data.letrasMonedaSingular + " " + data.letrasCentavos;
+            else
+                return Millones(data.enteros) + " " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+        }
+
+        function NumeroALetrasFecha(num) {
+            const unidades = ["UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+            const decenas = ["DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+            const especiales = ["ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECI", "VEINTI"];
+
+            if (num < 10) return unidades[num - 1];
+            if (num >= 11 && num <= 15) return especiales[num - 11];
+            if (num >= 16 && num <= 19) return "DIECI" + unidades[num - 11];
+            if (num === 20) return "VEINTE";
+            if (num >= 21 && num <= 29) return "VEINTI" + unidades[num - 21];
+            if (num >= 30 && num <= 99) {
+                const decena = Math.floor(num / 10);
+                const unidad = num - (decena * 10);
+                return decenas[decena - 1] + (unidad !== 0 ? " Y " + unidades[unidad - 1] : "");
+            }
+            return "";
+        }
+
+        function obtenerFechaCaducidadLetras(fecha) {
+            const dias = fecha.getDate();
+            const mes = fecha.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+            const año = fecha.getFullYear();
+            const diasEnLetras = NumeroALetrasFecha(dias);
+            return `${diasEnLetras} DÍAS DEL MES DE ${mes} DE ${año}`;
+        }
+
+        function debeMostrarDescuentoIpasme(categoria) {
+            if (!categoria) return true;
+            const categoriaUpper = categoria.toUpperCase().trim();
+            const categoriasSinDescuento = [
+                "OBRERO",
+                "OBRERO FIJO",
+                "OBRERO JUBILADO",
+                "OBRERO CONTRATADO",
+                "ADMINISTRATIVO JUBILADO",
+                "DOCENTE JUBILADO"
+            ];
+
+            if (categoriasSinDescuento.includes(categoriaUpper)) {
+                return false;
+            }
+            return true;
+        }
+
+        let ultimoTerminoBusqueda = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputBusqueda = document.getElementById('busqueda');
+            const fechaContainer = document.getElementById('fechaContainer');
+
+            function verificarLongitud(valor) {
+                if (valor.length === 14) {
+                    fechaContainer.style.display = 'none';
+                } else {
+                    fechaContainer.style.display = 'block';
+                }
+            }
+
+            inputBusqueda.addEventListener('input', () => {
+                const valorActual = inputBusqueda.value.trim();
+
+                if (valorActual !== ultimoTerminoBusqueda) {
+                    document.getElementById('resultados').innerHTML = '';
+                }
+
+                inputBusqueda.value = valorActual.toUpperCase();
+                verificarLongitud(valorActual);
+                ultimoTerminoBusqueda = valorActual;
+            });
+
+            document.querySelector('.btn-buscar').onclick = buscarEmpleado;
+        });
+
+        async function buscarEmpleado() {
+            const terminoBusqueda = document.getElementById('busqueda').value.trim();
+            const resultadosDiv = document.getElementById('resultados');
+            const fechaIngreso = document.getElementById('fecha').value;
+
+            resultadosDiv.innerHTML = '';
+
+            if (!terminoBusqueda) {
+                resultadosDiv.innerHTML =
+                    '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Ingrese un número de cédula o Serial válido.</div>';
+                return;
+            }
+
+            const esSerial = terminoBusqueda.length === 14;
+            const fechaContainerVisible = document.getElementById('fechaContainer').style.display !== 'none';
+
+            if (!esSerial && fechaContainerVisible && !fechaIngreso) {
+                resultadosDiv.innerHTML =
+                    '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Ingrese la fecha de ingreso.</div>';
+                return;
+            }
+
+            resultadosDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Consultando Base de Datos...</p>
+                </div>
+            `;
+
+            try {
+                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+                const response = await fetch(url);
+                const empleados = await response.json();
+                console.log('Empleados recibidos:', empleados);
+
+                if (!empleados || empleados.length === 0) {
+                    resultadosDiv.innerHTML =
+                        '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> No se encontró el empleado.</div>';
+                    return;
+                }
+
+                let empleadoEncontrado = null;
+                const terminoClean = normalizeCleanJS(terminoBusqueda);
+
+                // 1. Si algún resultado coincide exactamente con el Código/Serial, es una búsqueda por Serial
+                const coincideSerial = empleados.find(emp => normalizeCleanJS(emp.Codigo) === terminoClean);
+
+                if (coincideSerial) {
+                    empleadoEncontrado = coincideSerial;
+                } else if (!esSerial && fechaContainerVisible && fechaIngreso) {
+                    // 2. Si se buscó por Cédula, comparar la Fecha de Ingreso
+                    for (let emp of empleados) {
+                        if (!emp.Desde) continue;
+
+                        const fechaBD = parseFechaStandard(emp.Desde);
+                        const fechaInput = parseFechaStandard(fechaIngreso);
+
+                        if (fechaBD && fechaInput) {
+                            fechaBD.setHours(0, 0, 0, 0);
+                            fechaInput.setHours(0, 0, 0, 0);
+
+                            if (fechaBD.getTime() === fechaInput.getTime()) {
+                                empleadoEncontrado = emp;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    // 3. Tomar el primer resultado devuelto por Apps Script
+                    empleadoEncontrado = empleados[0];
+                }
+
+                if (empleadoEncontrado) {
+                    const emp = empleadoEncontrado;
+                    const categoriaReal = emp.Categoria;
+                    const cargoReal = emp.Cargo;
+
+                    resultadosDiv.innerHTML = `
+                        <div class="card mt-3 border-success">
+                            <div class="card-body">
+                                <h2 class="card-title text-success">Empleado Encontrado</h2>
+                                <p class="card-text"><strong>Nombre:</strong> ${emp.Nombre || ''}</p>
+                                <p class="card-text"><strong>Cédula:</strong> ${emp.Cedula || ''}</p>
+                                <p class="card-text"><strong>Categoría:</strong> ${categoriaReal || ''}</p>
+                                <p class="card-text"><strong>Cargo:</strong> ${cargoReal || ''}</p>
+                                <p class="card-text"><strong>Desde:</strong> ${emp.Desde || ''}</p>
+                                <p class="card-text"><strong>Remuneración Mensual:</strong> ${emp.RemuneracionMensual || ''}</p>
+                                <p class="card-text"><strong>Serial:</strong> ${emp.Codigo || ''}</p>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-success btn-lg" onclick="generarPDF('${emp.Codigo}')">
+                                <i class="bi bi-file-earmark-text"></i> Generar Constancia Bancaria PDF
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    resultadosDiv.innerHTML =
+                        '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Los datos no coinciden o la fecha de ingreso no es correcta.</div>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                resultadosDiv.innerHTML = '<div class="alert alert-danger mt-3">Ocurrió un error al consultar los datos.</div>';
+            }
+        }
+
+    </script>
+
+    <!-- OVERLAY BARRA DE CARGA PDF -->
+    <div id="pdfLoadingOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:99999; align-items:center; justify-content:center;">
+      <div class="card shadow-lg border-0 rounded-4 text-center p-4" style="max-width: 420px; width: 90%; background: #ffffff;">
+        <div class="spinner-border text-primary mb-3 mx-auto" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+        <h5 class="fw-bold text-primary mb-2" id="pdfProgressTitle">Generando Constancia PDF...</h5>
+        <p class="text-muted small mb-3" id="pdfProgressText">Procesando datos y preparando documento. Por favor espere.</p>
+        <div class="progress" style="height: 12px; border-radius: 6px;">
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="pdfProgressBar" role="progressbar" style="width: 15%"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // Configuración de la URL del Web App de Google Apps Script
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj54Xv54pt7gGvQP-xtv1cb5VotlaxyTs-p_vncMUJjb6KfwZlPRZjLULUNtBqUFTB/exec';
+
+        // URLs de las imágenes
+        const URL_IMAGEN_CABECERA = 'https://i.ibb.co/Y438vY9q/cabecera.png';
+        const URL_IMAGEN_TALENTO = 'https://i.ibb.co/r29PSQ3Y/logo-talento-humano.png';
+        const URL_IMAGEN_QR = 'https://i.ibb.co/jk6n1MzS/QR.png';
+
+        function normalizeCleanJS(val) {
+            if (!val) return '';
+            let str = String(val).trim().toUpperCase();
+            str = str.replace(/[ÁÀÄÂ]/g, "A")
+                     .replace(/[ÉÈËÊ]/g, "E")
+                     .replace(/[ÍÌÏÎ]/g, "I")
+                     .replace(/[ÓÒÖÔ]/g, "O")
+                     .replace(/[ÚÙÜÛ]/g, "U");
+            return str.replace(/[^A-Z0-9]/g, "");
+        }
+
+        function formatDateDDMMAAAA(val) {
+            if (val === null || val === undefined || val === '') return '';
+            
+            if (val instanceof Date) {
+                const d = String(val.getUTCDate()).padStart(2, '0');
+                const m = String(val.getUTCMonth() + 1).padStart(2, '0');
+                const y = val.getUTCFullYear();
+                return `${d}/${m}/${y}`;
+            }
+
+            const s = String(val).trim();
+            if (!s) return '';
+
+            const isoMatch = s.match(/^(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})/);
+            if (isoMatch) {
+                const year = isoMatch[1];
+                const month = isoMatch[2].padStart(2, '0');
+                const day = isoMatch[3].padStart(2, '0');
+                return `${day}/${month}/${year}`;
+            }
+
+            const parts = s.split(/[\/\-\.\sT]/)[0].split(/[\/\-\.]/);
+            if (parts.length === 3) {
+                if (parts[2].length === 4) {
+                    let day = parts[0].padStart(2, '0');
+                    let month = parts[1].padStart(2, '0');
+                    let year = parts[2];
+                    if (parseInt(month, 10) > 12) {
+                        const tmp = day; day = month; month = tmp;
+                    }
+                    return `${day}/${month}/${year}`;
+                } else if (parts[0].length === 4) {
+                    let year = parts[0];
+                    let month = parts[1].padStart(2, '0');
+                    let day = parts[2].padStart(2, '0');
+                    return `${day}/${month}/${year}`;
+                }
+            }
+
+            const parsed = new Date(s);
+            if (!isNaN(parsed.getTime())) {
+                const day = String(parsed.getUTCDate()).padStart(2, '0');
+                const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+                const year = parsed.getUTCFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            return s;
+        }
+
+        function formatearRemuneracionBs(valor) {
+            if (valor === null || valor === undefined || valor === '') return '0,00 Bs';
+            const limpio = String(valor).replace(/[^\d,.-]/g, '').replace(',', '.');
+            const numero = parseFloat(limpio) || 0;
+            const partes = numero.toFixed(2).split('.');
+            const enteras = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            return `${enteras},${partes[1]} Bs`;
+        }
+
+        function parseFechaStandard(str) {
+            if (!str) return null;
+            if (str instanceof Date) return str;
+            const s = String(str).trim();
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                const [y, m, d] = s.split('-').map(Number);
+                return new Date(y, m - 1, d);
+            }
+            const parts = s.split(/[\/\-\.]/).map(Number);
+            if (parts.length === 3) {
+                if (parts[0] > 12) {
+                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                }
+                if (parts[2] > 1000) {
+                    return new Date(parts[2], parts[0] - 1, parts[1]);
+                }
+            }
+            return new Date(s);
+        }
+
+        // --- Lógica de conversión de números a letras ---
+        function NumeroALetras(num) {
+            let data = {
+                numero: num,
+                enteros: Math.floor(num),
+                centavos: Math.round((num - Math.floor(num)) * 100),
+                letrasCentavos: "",
+                letrasMonedaPlural: 'BOLIVARES',
+                letrasMonedaSingular: 'BOLIVAR',
+                letrasMonedaCentavoPlural: "CENTIMOS",
+                letrasMonedaCentavoSingular: "CENTIMO"
+            };
+
+            function Unidades(num) {
+                switch (num) {
+                    case 1: return "UN";
+                    case 2: return "DOS";
+                    case 3: return "TRES";
+                    case 4: return "CUATRO";
+                    case 5: return "CINCO";
+                    case 6: return "SEIS";
+                    case 7: return "SIETE";
+                    case 8: return "OCHO";
+                    case 9: return "NUEVE";
+                }
+                return "";
+            }
+
+            function Decenas(num) {
+                let decena = Math.floor(num / 10);
+                let unidad = num - (decena * 10);
+
+                switch (decena) {
+                    case 1:
+                        switch (unidad) {
+                            case 0: return "DIEZ";
+                            case 1: return "ONCE";
+                            case 2: return "DOCE";
+                            case 3: return "TRECE";
+                            case 4: return "CATORCE";
+                            case 5: return "QUINCE";
+                            default: return "DIECI" + Unidades(unidad);
+                        }
+                    case 2:
+                        switch (unidad) {
+                            case 0: return "VEINTE";
+                            default: return "VEINTI" + Unidades(unidad);
+                        }
+                    case 3: return DecenasY("TREINTA", unidad);
+                    case 4: return DecenasY("CUARENTA", unidad);
+                    case 5: return DecenasY("CINCUENTA", unidad);
+                    case 6: return DecenasY("SESENTA", unidad);
+                    case 7: return DecenasY("SETENTA", unidad);
+                    case 8: return DecenasY("OCHENTA", unidad);
+                    case 9: return DecenasY("NOVENTA", unidad);
+                    case 0: return Unidades(unidad);
+                }
+            }
+
+            function DecenasY(strSin, numUnidades) {
+                if (numUnidades > 0)
+                    return strSin + " Y " + Unidades(numUnidades);
+                return strSin;
+            }
+
+            function Centenas(num) {
+                let centenas = Math.floor(num / 100);
+                let decenas = num - (centenas * 100);
+
+                switch (centenas) {
+                    case 1:
+                        if (decenas > 0)
+                            return "CIENTO " + Decenas(decenas);
+                        return "CIEN";
+                    case 2: return "DOSCIENTOS " + Decenas(decenas);
+                    case 3: return "TRESCIENTOS " + Decenas(decenas);
+                    case 4: return "CUATROCIENTOS " + Decenas(decenas);
+                    case 5: return "QUINIENTOS " + Decenas(decenas);
+                    case 6: return "SEISCIENTOS " + Decenas(decenas);
+                    case 7: return "SETECIENTOS " + Decenas(decenas);
+                    case 8: return "OCHOCIENTOS " + Decenas(decenas);
+                    case 9: return "NOVECIENTOS " + Decenas(decenas);
+                }
+                return Decenas(decenas);
+            }
+
+            function Seccion(num, divisor, strSingular, strPlural) {
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let letras = "";
+
+                if (cientos > 0) {
+                    if (cientos > 1)
+                        letras = Centenas(cientos) + " " + strPlural;
+                    else
+                        letras = strSingular;
+                }
+
+                if (resto > 0)
+                    letras += " " + Centenas(resto);
+
+                return letras;
+            }
+
+            function Miles(num) {
+                let divisor = 1000;
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let strMiles = Seccion(cientos, 1, "UN MIL", "MIL");
+                let strCentenas = Centenas(resto);
+
+                if (strMiles === "")
+                    return strCentenas;
+
+                return strMiles + " " + strCentenas;
+            }
+
+            function Millones(num) {
+                let divisor = 1000000;
+                let cientos = Math.floor(num / divisor);
+                let resto = num - (cientos * divisor);
+                let strMillones = Seccion(cientos, 1, "UN MILLON", "MILLONES");
+                let strMiles = Miles(resto);
+
+                if (strMillones === "")
+                    return strMiles;
+
+                return strMillones + " " + strMiles;
+            }
+
+            if (data.centavos > 0) {
+                data.letrasCentavos = "CON " + (function () {
+                    if (data.centavos == 1)
+                        return Decenas(data.centavos) + " " + data.letrasMonedaCentavoSingular;
+                    else
+                        return Decenas(data.centavos) + " " + data.letrasMonedaCentavoPlural;
+                })();
+            }
+
+            if (data.enteros == 0)
+                return "CERO " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+            if (data.enteros == 1)
+                return Millones(data.enteros) + " " + data.letrasMonedaSingular + " " + data.letrasCentavos;
+            else
+                return Millones(data.enteros) + " " + data.letrasMonedaPlural + " " + data.letrasCentavos;
+        }
+
+        function NumeroALetrasFecha(num) {
+            const unidades = ["UN", "DOS", "TRES", "CUATRO", "CINCO", "SEIS", "SIETE", "OCHO", "NUEVE"];
+            const decenas = ["DIEZ", "VEINTE", "TREINTA", "CUARENTA", "CINCUENTA", "SESENTA", "SETENTA", "OCHENTA", "NOVENTA"];
+            const especiales = ["ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE", "DIECI", "VEINTI"];
+
+            if (num < 10) return unidades[num - 1];
+            if (num >= 11 && num <= 15) return especiales[num - 11];
+            if (num >= 16 && num <= 19) return "DIECI" + unidades[num - 11];
+            if (num === 20) return "VEINTE";
+            if (num >= 21 && num <= 29) return "VEINTI" + unidades[num - 21];
+            if (num >= 30 && num <= 99) {
+                const decena = Math.floor(num / 10);
+                const unidad = num - (decena * 10);
+                return decenas[decena - 1] + (unidad !== 0 ? " Y " + unidades[unidad - 1] : "");
+            }
+            return "";
+        }
+
+        function obtenerFechaCaducidadLetras(fecha) {
+            const dias = fecha.getDate();
+            const mes = fecha.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+            const año = fecha.getFullYear();
+            const diasEnLetras = NumeroALetrasFecha(dias);
+            return `${diasEnLetras} DÍAS DEL MES DE ${mes} DE ${año}`;
+        }
+
+        function debeMostrarDescuentoIpasme(categoria) {
+            if (!categoria) return true;
+            const categoriaUpper = categoria.toUpperCase().trim();
+            const categoriasSinDescuento = [
+                "OBRERO",
+                "OBRERO FIJO",
+                "OBRERO JUBILADO",
+                "OBRERO CONTRATADO",
+                "ADMINISTRATIVO JUBILADO",
+                "DOCENTE JUBILADO"
+            ];
+
+            if (categoriasSinDescuento.includes(categoriaUpper)) {
+                return false;
+            }
+            return true;
+        }
+
+        let ultimoTerminoBusqueda = '';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputBusqueda = document.getElementById('busqueda');
+            const fechaContainer = document.getElementById('fechaContainer');
+
+            function verificarLongitud(valor) {
+                if (valor.length === 14) {
+                    fechaContainer.style.display = 'none';
+                } else {
+                    fechaContainer.style.display = 'block';
+                }
+            }
+
+            inputBusqueda.addEventListener('input', () => {
+                const valorActual = inputBusqueda.value.trim();
+
+                if (valorActual !== ultimoTerminoBusqueda) {
+                    document.getElementById('resultados').innerHTML = '';
+                }
+
+                inputBusqueda.value = valorActual.toUpperCase();
+                verificarLongitud(valorActual);
+                ultimoTerminoBusqueda = valorActual;
+            });
+
+            document.querySelector('.btn-buscar').onclick = buscarEmpleado;
+        });
+
+        async function buscarEmpleado() {
+            const terminoBusqueda = document.getElementById('busqueda').value.trim();
+            const resultadosDiv = document.getElementById('resultados');
+            const fechaIngreso = document.getElementById('fecha').value;
+
+            resultadosDiv.innerHTML = '';
+
+            if (!terminoBusqueda) {
+                resultadosDiv.innerHTML =
+                    '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Ingrese un número de cédula o Serial válido.</div>';
+                return;
+            }
+
+            const esSerial = terminoBusqueda.length === 14;
+            const fechaContainerVisible = document.getElementById('fechaContainer').style.display !== 'none';
+
+            if (!esSerial && fechaContainerVisible && !fechaIngreso) {
+                resultadosDiv.innerHTML =
+                    '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Ingrese la fecha de ingreso.</div>';
+                return;
+            }
+
+            resultadosDiv.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Consultando Base de Datos...</p>
+                </div>
+            `;
+
+            try {
+                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+                const response = await fetch(url);
+                const empleados = await response.json();
+
+                if (!empleados || empleados.length === 0) {
+                    resultadosDiv.innerHTML =
+                        '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> No se encontró el empleado.</div>';
+                    return;
+                }
+
+                let empleadoEncontrado = null;
+                const terminoClean = normalizeCleanJS(terminoBusqueda);
+
+                const coincideSerial = empleados.find(emp => normalizeCleanJS(emp.Codigo) === terminoClean);
+
+                if (coincideSerial) {
+                    empleadoEncontrado = coincideSerial;
+                } else if (!esSerial && fechaContainerVisible && fechaIngreso) {
+                    for (let emp of empleados) {
+                        if (!emp.Desde) continue;
+
+                        const fechaBD = parseFechaStandard(emp.Desde);
+                        const fechaInput = parseFechaStandard(fechaIngreso);
+
+                        if (fechaBD && fechaInput) {
+                            fechaBD.setHours(0, 0, 0, 0);
+                            fechaInput.setHours(0, 0, 0, 0);
+
+                            if (fechaBD.getTime() === fechaInput.getTime()) {
+                                empleadoEncontrado = emp;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    empleadoEncontrado = empleados[0];
+                }
+
+                if (empleadoEncontrado) {
+                    const emp = empleadoEncontrado;
+                    const categoriaReal = emp.Categoria;
+                    const cargoReal = emp.Cargo;
+                    const desdeFmt = formatDateDDMMAAAA(emp.Desde);
+                    const remFmt = formatearRemuneracionBs(emp.RemuneracionMensual);
+
+                    resultadosDiv.innerHTML = `
+                        <div class="card mt-3 border-success">
+                            <div class="card-body">
+                                <h2 class="card-title text-success fs-4 fw-bold">Empleado Encontrado</h2>
+                                <p class="card-text mb-1"><strong>Nombre:</strong> ${emp.Nombre || ''}</p>
+                                <p class="card-text mb-1"><strong>Cédula:</strong> ${emp.Cedula || ''}</p>
+                                <p class="card-text mb-1"><strong>Categoría:</strong> ${categoriaReal || ''}</p>
+                                <p class="card-text mb-1"><strong>Cargo:</strong> ${cargoReal || ''}</p>
+                                <p class="card-text mb-1"><strong>Desde:</strong> ${desdeFmt}</p>
+                                <p class="card-text mb-1"><strong>Remuneración Mensual:</strong> ${remFmt}</p>
+                                <p class="card-text mb-1"><strong>Serial:</strong> ${emp.Codigo || ''}</p>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-success btn-lg fw-bold shadow-sm" onclick="generarPDF('${emp.Codigo}')">
+                                <i class="bi bi-file-earmark-text me-1"></i> Generar Constancia Bancaria PDF
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    resultadosDiv.innerHTML =
+                        '<div class="alert alert-danger mt-3" role="alert"><i class="bi bi-exclamation-diamond"></i> Los datos no coinciden o la fecha de ingreso no es correcta.</div>';
+                }
+
+            } catch (err) {
+                console.error(err);
+                resultadosDiv.innerHTML = '<div class="alert alert-danger mt-3">Ocurrió un error al consultar los datos.</div>';
+            }
+        }
+
+        function crearPngFallback(tipo) {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                if (tipo === 'cabecera') {
+                    canvas.width = 555;
+                    canvas.height = 80;
+                    ctx.fillStyle = '#003366';
+                    ctx.fillRect(0, 0, 555, 80);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('UNIVERSIDAD POLITÉCNICA TERRITORIAL DE PUERTO CABELLO', 277, 40);
+                } else if (tipo === 'talento') {
+                    canvas.width = 80;
+                    canvas.height = 80;
+                    ctx.fillStyle = '#0066cc';
+                    ctx.fillRect(0, 0, 80, 80);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('TALENTO', 40, 35);
+                    ctx.fillText('HUMANO', 40, 50);
+                } else {
+                    canvas.width = 80;
+                    canvas.height = 80;
+                    ctx.fillStyle = '#e0e0e0';
+                    ctx.fillRect(0, 0, 80, 80);
+                    ctx.fillStyle = '#333333';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('QR CODE', 40, 40);
+                }
+                return canvas.toDataURL('image/png');
+            } catch (e) {
+                return '';
+            }
+        }
+
+        async function cargarImagenDesdeURL(url) {
+            return new Promise((resolve) => {
+                let tipo = 'general';
+                if (url && url.includes('cabecera')) tipo = 'cabecera';
+                else if (url && (url.includes('talento') || url.includes('th.png') || url.includes('logo'))) tipo = 'talento';
+
+                if (!url) {
+                    return resolve(crearPngFallback(tipo));
+                }
+
+                let finished = false;
+                const finish = (res) => {
+                    if (!finished) {
+                        finished = true;
+                        resolve(res);
+                    }
+                };
+
+                const timer = setTimeout(() => {
+                    finish(crearPngFallback(tipo));
+                }, 2000);
+
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.onload = function() {
+                    clearTimeout(timer);
+                    try {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width || (tipo === 'cabecera' ? 555 : 80);
+                        canvas.height = img.height || 80;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        finish(canvas.toDataURL('image/png'));
+                    } catch (e) {
+                        finish(crearPngFallback(tipo));
+                    }
+                };
+                img.onerror = function() {
+                    clearTimeout(timer);
+                    finish(crearPngFallback(tipo));
+                };
+                img.src = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+            });
+        }
+
+        function generarQRCodeDataUrl(texto, size = 220) {
+            return new Promise((resolve, reject) => {
+                if (window.QRCode && typeof QRCode.toDataURL === 'function') {
+                    QRCode.toDataURL(texto, { errorCorrectionLevel: 'H', type: 'image/png', width: size }, function (err, url) {
+                        if (err) return reject(err);
+                        resolve(url);
+                    });
+                } else {
+                    reject(new Error('Librería de QR no disponible'));
+                }
+            });
+        }
+
+        function showPdfProgress(titleText, descText, percent) {
+            const overlay = document.getElementById('pdfLoadingOverlay');
+            const bar = document.getElementById('pdfProgressBar');
+            const title = document.getElementById('pdfProgressTitle');
+            const text = document.getElementById('pdfProgressText');
+
+            if (bar) bar.style.width = percent + '%';
+            if (title && titleText) title.textContent = titleText;
+            if (text && descText) text.textContent = descText;
+            if (overlay) overlay.style.display = 'flex';
+        }
+
+        function hidePdfProgress() {
+            const overlay = document.getElementById('pdfLoadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        async function generarPDF(codigo) {
+            showPdfProgress('Iniciando Generación de PDF...', 'Consultando información del expediente...', 15);
+
+            try {
+                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(codigo)}`;
+                const response = await fetch(url);
+                const empleados = await response.json();
+                const empleadoEncontrado = empleados && empleados[0];
+
+                if (!empleadoEncontrado) {
+                    hidePdfProgress();
+                    alert("Error: No se encontraron datos para generar el PDF.");
+                    return;
+                }
+
+                showPdfProgress('Cargando Recursos...', 'Obteniendo membrete, logo y generando código QR...', 45);
+
+                const nombre = empleadoEncontrado.Nombre;
+                const cedula = empleadoEncontrado.Cedula;
+                const categoriaReal = empleadoEncontrado.Categoria;
+                const cargoReal = empleadoEncontrado.Cargo;
+                const desde = formatDateDDMMAAAA(empleadoEncontrado.Desde);
+                const remuneracionMensual = empleadoEncontrado.RemuneracionMensual;
+                const status = empleadoEncontrado.Status;
+
+                const validez = (status === 'JUBILADO') ? "" : "Válido por 30 Días";
+
+                const fechaEmision = new Date();
+                const fechaCaducidad = new Date(fechaEmision);
+                fechaCaducidad.setDate(fechaCaducidad.getDate() + 30);
+
+                const fechaEmisionStr = formatDateDDMMAAAA(fechaEmision);
+                const fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidad);
+                const fechaCaducidadLetras = obtenerFechaCaducidadLetras(fechaCaducidad);
+
+                const remuneracionNum = parseFloat(String(remuneracionMensual ?? '0').replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+                const remuneracionRedondeada = Number(remuneracionNum.toFixed(2));
+                const remuneracionFormateada = formatearRemuneracionBs(remuneracionRedondeada);
+                const remuneracionEnLetras = NumeroALetras(remuneracionRedondeada);
+
+                const desdePDF = desde;
+                const mostrarDescuento = debeMostrarDescuentoIpasme(categoriaReal);
+
+                let textoDescuento = "";
+                if (mostrarDescuento) {
+                    textoDescuento = ` Al trabajador se le realiza un descuento del 6% del IPASME.`;
+                }
+
+                const textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, presta servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, desde el ${desdePDF}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
+
+                const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionStr} ${NumeroALetrasFecha(fechaEmision.getDate())} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadStr} ${fechaCaducidadLetras}.`;
+
+                const qrText = `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
+                const qrCacheKey = 'qr_' + codigo;
+
+                const [imagenCabeceraBase64, imagenTalentoBase64] = await Promise.all([
+                    cargarImagenDesdeURL(URL_IMAGEN_CABECERA),
+                    cargarImagenDesdeURL(URL_IMAGEN_TALENTO)
+                ]);
+
+                let imagenQrBase64 = null;
+                try {
+                    imagenQrBase64 = sessionStorage.getItem(qrCacheKey);
+                } catch (e) {
+                    imagenQrBase64 = null;
+                }
+
+                if (!imagenQrBase64) {
+                    try {
+                        imagenQrBase64 = await generarQRCodeDataUrl(qrText, 220);
+                        try { sessionStorage.setItem(qrCacheKey, imagenQrBase64); } catch (e) {}
+                    } catch (err) {
+                        imagenQrBase64 = await cargarImagenDesdeURL(URL_IMAGEN_QR);
+                    }
+                }
+
+                showPdfProgress('Compilando Documento PDF...', 'Ensamblando diseño y estructura...', 80);
+
+                const documentDefinition = {
+                    pageSize: 'LETTER',
+                    content: [
+                        {
+                            image: imagenCabeceraBase64,
+                            width: 595 - 40,
+                            alignment: 'center',
+                        },
+                        { text: 'CONSTANCIA DE TRABAJO', style: 'header' },
+                        {
+                            text: textoCompleto,
+                            style: 'paragraph'
+                        },
+                        {
+                            text: textoFechas,
+                            style: 'paragraph'
+                        },
+                        { text: `Serial: ${codigo}`, style: 'serial' }
+                    ],
+                    styles: {
+                        header: { fontSize: 18, bold: true, alignment: 'center', margin: [0, 20, 0, 20] },
+                        paragraph: { fontSize: 12, margin: [0, 10, 0, 10], alignment: 'justify', lineHeight: 1.5 },
+                        serial: { fontSize: 10, alignment: 'right' }
+                    },
+                    footer: function (currentPage, pageCount) {
+                        const anchoLogoQR = 80;
+                        const margenLateral = 10;
+                        const anchoTotal = 580 - 5 * margenLateral;
+                        const anchoTexto = anchoTotal - 2 * anchoLogoQR;
+
+                        return {
+                            stack: [
+                                {
+                                    text: [
+                                        { text: "MSc. AMELIA TERESA PADRON MORENO\n", bold: true },
+                                        "Directora de Gestión y Talento Humano\n",
+                                        "Consejo de Gestión Universitario Nº CU-01/2024"
+                                    ],
+                                    alignment: 'center',
+                                    fontSize: 12,
+                                    margin: [0, 0, 0, 30]
+                                },
+                                {
+                                    columns: [
+                                        {
+                                            image: imagenTalentoBase64,
+                                            width: anchoLogoQR,
+                                            alignment: 'center'
+                                        },
+                                        {
+                                            width: anchoTexto,
+                                            text: [
+                                                "UNIVERSIDAD POLITÉCNICA TERRITORIAL DE PUERTO CABELLO\n",
+                                                "RIF: G-20005608-8\n",
+                                                "Urb. La Elvira Zona Industrial Santa Rosa Galpón N° 8.\n",
+                                                "Puerto Cabello, Estado Carabobo\n",
+                                                "https://www.uptc.edu.ve\n"
+                                            ],
+                                            alignment: 'left',
+                                            fontSize: 8,
+                                            margin: [20, 20, 0, 0]
+                                        },
+                                        {
+                                            stack: [
+                                                {
+                                                    image: imagenQrBase64,
+                                                    width: anchoLogoQR,
+                                                    alignment: 'center'
+                                                },
+                                                {
+                                                    text: `Serial: ${codigo}`,
+                                                    alignment: 'center',
+                                                    fontSize: 8,
+                                                    bold: true,
+                                                    margin: [0, 2, 0, 0]
+                                                },
+                                                {
+                                                    text: validez,
+                                                    alignment: 'center',
+                                                    fontSize: 8,
+                                                    margin: [0, 2, 0, 0]
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    margin: [15, 0, 15, 0]
+                                },
+                                {
+                                    text: "DOCUMENTO VÁLIDO SOLO CON FIRMA Y SELLO HÚMEDO",
+                                    alignment: 'center',
+                                    fontSize: 10,
+                                    bold: true,
+                                    margin: [0, 20, 0, 0]
+                                }
+                            ],
+                            margin: [15, -180, 15, 0]
+                        };
+                    }
+                };
+
+                showPdfProgress('Iniciando Descarga...', 'Su documento está listo para ser guardado.', 100);
+
+                pdfMake.createPdf(documentDefinition).download(`Constancia_${cedula}.pdf`);
+
+                setTimeout(() => {
+                    hidePdfProgress();
+                }, 800);
+
+            } catch (err) {
+                console.error("Error al obtener datos para PDF:", err);
+                hidePdfProgress();
+                alert("Error al obtener datos para generar el PDF.");
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
