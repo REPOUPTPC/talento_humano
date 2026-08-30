@@ -447,7 +447,14 @@
             `;
 
             try {
-                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(terminoBusqueda)}&usuario=CONSULTA%20WEB%20PUBLICA`;
+                let publicIp = '127.0.0.1';
+                try {
+                    const ipRes = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipRes.json();
+                    if (ipData && ipData.ip) publicIp = ipData.ip;
+                } catch(e) {}
+
+                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(terminoBusqueda)}&usuario=CONSULTA%20WEB%20PUBLICA&ip=${encodeURIComponent(publicIp)}`;
                 const response = await fetch(url);
                 const empleados = await response.json();
 

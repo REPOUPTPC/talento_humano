@@ -402,8 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
           return rowVals.includes(searchNorm) || (searchDigits.length > 0 && rowDigits.includes(searchDigits));
         });
       } else {
-        // Usar directamente el endpoint 'busqueda' como en consulta.html
-        const res = await fetch(`${appScriptUrl}?busqueda=${encodeURIComponent(cedulaInput)}&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}`);
+        const userIp = await getUserPublicIp();
+        const res = await fetch(`${appScriptUrl}?busqueda=${encodeURIComponent(cedulaInput)}&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}&ip=${encodeURIComponent(userIp)}`);
         const json = await res.json();
         
         let arr = [];
@@ -767,6 +767,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- HELPER FUNCIONES ROL & FECHAS AUDITORÍA ---
+  let cachedUserIp = '';
+  async function getUserPublicIp() {
+    if (cachedUserIp) return cachedUserIp;
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      if (data && data.ip) cachedUserIp = data.ip;
+    } catch (e) {
+      cachedUserIp = '127.0.0.1';
+    }
+    return cachedUserIp;
+  }
+  getUserPublicIp();
+
   function getUserRole(uStr, rStr) {
     if (rStr && (rStr.toUpperCase().includes('SUPER') || rStr.toUpperCase() === 'SUPER_ADMIN')) return 'SUPER_ADMIN';
     if (rStr && (rStr.toUpperCase().includes('ADMIN') || rStr.toUpperCase() === 'ADMIN')) return 'ADMIN';
