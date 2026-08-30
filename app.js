@@ -1173,8 +1173,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const qrText = `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
 
-      const URL_IMAGEN_CABECERA = 'https://i.ibb.co/Y438vY9q/cabecera.png';
-      const URL_IMAGEN_TALENTO = 'https://i.ibb.co/r29PSQ3Y/logo-talento-humano.png';
+      const URL_IMAGEN_CABECERA = 'https://repouptpc.github.io/talento_humano/img/cabecera.png';
+      const URL_IMAGEN_TALENTO = 'https://repouptpc.github.io/talento_humano/img/th.png';
 
       const [imagenCabeceraBase64, imagenTalentoBase64, imagenQrBase64] = await Promise.all([
         cargarImagenDesdeURL(URL_IMAGEN_CABECERA),
