@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentBulkData = [];
   let modifiedRows = new Set();
   let chartConsultasInstance = null;
+  let chartHorasInstance = null;
 
   // Elements
   const userRoleBadge = document.getElementById('userRoleBadge');
@@ -876,6 +877,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (useDemoMode || !appScriptUrl) {
         rawLogs = demoConsultas;
         totalTrabajadores = demoDatabase.length;
+        if (!currentBulkData || currentBulkData.length === 0) {
+          currentBulkData = demoDatabase;
+        }
       } else {
         const res = await fetch(`${appScriptUrl}?action=getStats&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}`);
         const data = await res.json();
@@ -884,6 +888,19 @@ document.addEventListener('DOMContentLoaded', () => {
           totalTrabajadores = data.totalRegistros || 0;
         }
         
+        // Ensure currentBulkData is loaded to resolve employee names
+        if (!currentBulkData || currentBulkData.length === 0) {
+          try {
+            const resBulk = await fetch(`${appScriptUrl}?action=readAll&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}`);
+            const dataBulk = await resBulk.json();
+            if (dataBulk.success && dataBulk.data) {
+              currentBulkData = dataBulk.data;
+            }
+          } catch (e) {
+            console.warn("No se pudo cargar la base de datos para resolver nombres.", e);
+          }
+        }
+
         // Ensure currentAdminsList is loaded to correctly resolve roles
         if (currentAdminsList.length === 0) {
           try {
@@ -916,6 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render chart
       renderChartConsultas(consultasAdmin, consultasWeb);
+      renderChartHoras(logsList);
 
       // Render logs table
       renderTablaConsultas(logsList);
@@ -956,6 +974,62 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function renderChartHoras(logs) {
+    const ctx = document.getElementById('chartHoras');
+    if (!ctx) return;
+
+    if (chartHorasInstance) {
+      chartHorasInstance.destroy();
+    }
+
+    const horasCount = new Array(24).fill(0);
+
+    logs.forEach(l => {
+      if (l.fecha) {
+        const s = String(l.fecha).trim();
+        // Extract hour using regex matching HH:MM or HH:MM:SS format
+        const match = s.match(/(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hora = parseInt(match[1], 10);
+          if (!isNaN(hora) && hora >= 0 && hora < 24) {
+            horasCount[hora]++;
+          }
+        }
+      }
+    });
+
+    const labels = Array.from({length: 24}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+
+    chartHorasInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Consultas por Hora',
+          data: horasCount,
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
   function renderTablaConsultas(logs) {
     const body = document.getElementById('bodyTablaConsultas');
     if (!body) return;
@@ -969,8 +1043,23 @@ document.addEventListener('DOMContentLoaded', () => {
     logs.forEach(l => {
       const tr = document.createElement('tr');
       const roleInfo = getRoleBadgeInfo(l.usuario, l.rol);
+      
+      let nombreMostrado = l.usuario;
+      const isPublic = !l.usuario || l.usuario === 'CONSULTA WEB PUBLICA' || l.usuario === 'WEB_PUBLIC' || l.usuario.includes('Público') || getUserRole(l.usuario, l.rol) === 'USER';
+
+      if (isPublic && currentBulkData && currentBulkData.length > 0) {
+          const emp = currentBulkData.find(e => 
+              (e.Cedula && normalizeClean(e.Cedula) === normalizeClean(l.consultado)) || 
+              (e.Codigo && normalizeClean(e.Codigo) === normalizeClean(l.consultado)) ||
+              (e.Documento && normalizeClean(e.Documento) === normalizeClean(l.consultado))
+          );
+          if (emp && emp.Nombre) {
+              nombreMostrado = emp.Nombre;
+          }
+      }
+
       tr.innerHTML = `
-        <td><span class="badge ${roleInfo.class} px-2 py-1">${escapeHtml(l.usuario)}</span></td>
+        <td><span class="badge ${roleInfo.class} px-2 py-1">${escapeHtml(nombreMostrado)}</span></td>
         <td class="fw-bold">${escapeHtml(l.consultado || l.cedula || 'N/A')}</td>
         <td><code>${escapeHtml(l.ip || 'N/A')}</code></td>
         <td><small class="text-muted">${escapeHtml(l.fecha || 'N/A')}</small></td>
@@ -989,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const kpiWeb = document.getElementById('kpiConsultasWeb')?.textContent || '0';
       const kpiTrab = document.getElementById('kpiTotalTrabajadores')?.textContent || '0';
 
-      const logoBase64 = await cargarImagenDesdeURL('https://i.ibb.co/r29PSQ3Y/logo-talento-humano.png');
+      const logoBase64 = await cargarImagenDesdeURL('https://repouptpc.github.io/talento_humano/img/th.png');
 
       const rawLogs = (lastStatsLogs && lastStatsLogs.length > 0) ? lastStatsLogs : demoConsultas;
       const logsToUse = getFilteredStatsLogs(rawLogs);
@@ -1004,9 +1093,23 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const logRows = logsToUse.length > 0 ? logsToUse.map(c => {
+        let nombreMostrado = c.usuario;
+        const isPublic = !c.usuario || c.usuario === 'CONSULTA WEB PUBLICA' || c.usuario === 'WEB_PUBLIC' || c.usuario.includes('Público') || getUserRole(c.usuario, c.rol) === 'USER';
+
+        if (isPublic && currentBulkData && currentBulkData.length > 0) {
+            const emp = currentBulkData.find(e => 
+                (e.Cedula && normalizeClean(e.Cedula) === normalizeClean(c.consultado)) || 
+                (e.Codigo && normalizeClean(e.Codigo) === normalizeClean(c.consultado)) ||
+                (e.Documento && normalizeClean(e.Documento) === normalizeClean(c.consultado))
+            );
+            if (emp && emp.Nombre) {
+                nombreMostrado = emp.Nombre;
+            }
+        }
+
         const roleInfo = getRoleBadgeInfo(c.usuario, c.rol);
         return [
-          { text: String(c.usuario || 'N/A'), fontSize: 9, bold: true, fillColor: roleInfo.pdfBg, color: roleInfo.pdfColor, alignment: 'center' },
+          { text: String(nombreMostrado || 'N/A'), fontSize: 9, bold: true, fillColor: roleInfo.pdfBg, color: roleInfo.pdfColor, alignment: 'center' },
           { text: String(c.consultado || c.cedula || 'N/A'), fontSize: 9, bold: true, alignment: 'center' },
           { text: String(c.ip || 'N/A'), fontSize: 9, alignment: 'center' },
           { text: String(c.fecha || 'N/A'), fontSize: 9, alignment: 'center' }

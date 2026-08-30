@@ -396,13 +396,27 @@
               </div>
             </div>
 
-            <!-- Gráfico Chart.js -->
-            <div class="card border mb-4">
-              <div class="card-header bg-light py-2 fw-bold text-secondary">
-                <i class="bi bi-pie-chart-fill me-1"></i> Distribución de Consultas (ADMIN vs WEB Pública)
+            <!-- Gráficos Chart.js -->
+            <div class="row">
+              <div class="col-md-6 mb-4">
+                <div class="card border h-100">
+                  <div class="card-header bg-light py-2 fw-bold text-secondary">
+                    <i class="bi bi-pie-chart-fill me-1"></i> Distribución de Consultas
+                  </div>
+                  <div class="card-body p-3" style="max-height: 320px; position: relative;">
+                    <canvas id="chartConsultas" style="max-height: 280px;"></canvas>
+                  </div>
+                </div>
               </div>
-              <div class="card-body p-3" style="max-height: 320px; position: relative;">
-                <canvas id="chartConsultas" style="max-height: 280px;"></canvas>
+              <div class="col-md-6 mb-4">
+                <div class="card border h-100">
+                  <div class="card-header bg-light py-2 fw-bold text-secondary">
+                    <i class="bi bi-bar-chart-fill me-1"></i> Consultas por Hora
+                  </div>
+                  <div class="card-body p-3" style="max-height: 320px; position: relative;">
+                    <canvas id="chartHoras" style="max-height: 280px;"></canvas>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -573,11 +587,18 @@ function doGet(e) {
       var logsList = [];
       if (logsData.length > 1) {
         for (var l = 1; l < logsData.length; l++) {
+          var fVal = logsData[l][3];
+          var fStr = "";
+          if (fVal instanceof Date) {
+            fStr = formatDateDDMMAAAA(fVal) + " " + Utilities.formatDate(fVal, ss.getSpreadsheetTimeZone(), "HH:mm:ss");
+          } else {
+            fStr = String(fVal || '');
+          }
           logsList.push({
             usuario: String(logsData[l][0] || ''),
             consultado: String(logsData[l][1] || ''),
             ip: String(logsData[l][2] || ''),
-            fecha: formatDateDDMMAAAA(logsData[l][3])
+            fecha: fStr
           });
         }
       }
