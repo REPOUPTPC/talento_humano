@@ -549,8 +549,13 @@ function doGet(e) {
           var empCedula = String(cedulaVal || "").trim();
 
           var usuarioAudit = params.usuario ? String(params.usuario).trim() : empNombre;
-          if (!usuarioAudit) usuarioAudit = "WEB_PUBLIC";
-          logConsulta(ss, usuarioAudit, empCedula, e);
+          if (!usuarioAudit || usuarioAudit === "CONSULTA WEB PUBLICA" || usuarioAudit === "WEB_PUBLIC") {
+            usuarioAudit = empNombre || "CONSULTA WEB PUBLICA";
+          }
+
+          if (String(params.nolog).toLowerCase() !== 'true') {
+            logConsulta(ss, usuarioAudit, empCedula, e);
+          }
 
           resultados.push({
             Documento: colDocumento !== -1 ? String(row[colDocumento] || "") : "",

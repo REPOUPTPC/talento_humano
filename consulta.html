@@ -486,6 +486,7 @@
                 }
 
                 if (empleadoEncontrado) {
+                    ultimoEmpleadoEncontrado = empleadoEncontrado;
                     const emp = empleadoEncontrado;
                     const categoriaReal = emp.Categoria;
                     const cargoReal = emp.Cargo;
@@ -639,14 +640,19 @@
             if (overlay) overlay.style.display = 'none';
         }
 
+        let ultimoEmpleadoEncontrado = null;
+
         async function generarPDF(codigo) {
             showPdfProgress('Iniciando Generación de PDF...', 'Consultando información del expediente...', 15);
 
             try {
-                const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(codigo)}&usuario=CONSULTA%20WEB%20PUBLICA`;
-                const response = await fetch(url);
-                const empleados = await response.json();
-                const empleadoEncontrado = empleados && empleados[0];
+                let empleadoEncontrado = ultimoEmpleadoEncontrado;
+                if (!empleadoEncontrado || (empleadoEncontrado.Codigo !== codigo && empleadoEncontrado.Cedula !== codigo)) {
+                    const url = `${GOOGLE_SCRIPT_URL}?busqueda=${encodeURIComponent(codigo)}&usuario=CONSULTA%20WEB%20PUBLICA&nolog=true`;
+                    const response = await fetch(url);
+                    const empleados = await response.json();
+                    empleadoEncontrado = empleados && empleados[0];
+                }
 
                 if (!empleadoEncontrado) {
                     hidePdfProgress();

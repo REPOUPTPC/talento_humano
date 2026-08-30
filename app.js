@@ -812,16 +812,27 @@ document.addEventListener('DOMContentLoaded', () => {
   function parseFechaAudit(fechaStr) {
     if (!fechaStr) return null;
     const str = String(fechaStr).trim();
-    if (str.includes('/')) {
-      const parts = str.split(' ')[0].split('/');
+    let tParts = [0, 0, 0];
+    const spaceParts = str.split(/\s+/);
+
+    if (spaceParts.length >= 2) {
+      const timeSplit = spaceParts[1].split(':');
+      if (timeSplit.length >= 1) tParts[0] = parseInt(timeSplit[0], 10) || 0;
+      if (timeSplit.length >= 2) tParts[1] = parseInt(timeSplit[1], 10) || 0;
+      if (timeSplit.length >= 3) tParts[2] = parseInt(timeSplit[2], 10) || 0;
+    }
+
+    const dateStr = spaceParts[0];
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
       if (parts.length === 3) {
-        return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10), tParts[0], tParts[1], tParts[2]);
       }
     }
-    if (str.includes('-')) {
-      const parts = str.split(' ')[0].split('-');
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
       if (parts.length === 3) {
-        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), tParts[0], tParts[1], tParts[2]);
       }
     }
     const d = new Date(str);
