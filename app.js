@@ -1701,6 +1701,247 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${NumeroALetrasFecha(dias)} DÍAS DEL MES DE ${mes} DE ${año}`;
   }
 
+  // --- GESTIÓN E IMPORTACIÓN DE ARCHIVOS CSV EN PESTAÑA MASIVA ---
+  const btnDescargarCsvPlantilla = document.getElementById('btnDescargarCsvPlantilla');
+  const inputArchivoCsv = document.getElementById('inputArchivoCsv');
+  const btnProcesarCsvFinal = document.getElementById('btnProcesarCsvFinal');
+  const contenedorPrevisualizacionCsv = document.getElementById('contenedorPrevisualizacionCsv');
+  const bodyTablaPrevisualizacionCsv = document.getElementById('bodyTablaPrevisualizacionCsv');
+  const badgeTotalCsvPrevisualizado = document.getElementById('badgeTotalCsvPrevisualizado');
+
+  let datosCsvParsedCache = [];
+
+  function generarCodigoAlfanumerico() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const num = '0123456789';
+    let r1 = '', r2 = '', n1 = '', n2 = '';
+    for (let i = 0; i < 3; i++) r1 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < 4; i++) n1 += num.charAt(Math.floor(Math.random() * num.length));
+    for (let i = 0; i < 3; i++) r2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < 4; i++) n2 += num.charAt(Math.floor(Math.random() * num.length));
+    return `${r1}${n1}${r2}${n2}`;
+  }
+
+  // 1. Descargar Tabla Actual en CSV (7 campos)
+  if (btnDescargarCsvPlantilla) {
+    btnDescargarCsvPlantilla.addEventListener('click', () => {
+      const dataToExport = (currentBulkData && currentBulkData.length > 0) ? currentBulkData : demoDatabase;
+      const headers = ['Cedula', 'Nombre', 'Categoria', 'Cargo', 'Desde', 'RemuneracionMensual', 'Status'];
+      
+      let csvContent = headers.join(',') + '\n';
+      dataToExport.forEach(item => {
+        let ced = item.Cedula || '';
+        if (ced && !ced.startsWith('V-') && !ced.startsWith('E-') && /^\d+$/.test(ced.trim())) {
+          ced = 'V-' + ced.trim();
+        }
+
+        let rem = item.RemuneracionMensual || '0';
+        rem = String(rem).replace(',', '.').replace(/[^\d\.]/g, '');
+        if (!rem) rem = '0.00';
+
+        const row = [
+          `"${String(ced).replace(/"/g, '""')}"`,
+          `"${String(item.Nombre || '').toUpperCase().replace(/"/g, '""')}"`,
+          `"${String(item.Categoria || '').toUpperCase().replace(/"/g, '""')}"`,
+          `"${String(item.Cargo || '').toUpperCase().replace(/"/g, '""')}"`,
+          `"${String(item.Desde || '').replace(/"/g, '""')}"`,
+          `="${rem}"`,
+          `"${String(item.Status || 'ACTIVO').toUpperCase().replace(/"/g, '""')}"`
+        ];
+        csvContent += row.join(',') + '\n';
+      });
+
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `expedientes_talento_humano_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
+  }
+
+  // 2. Procesar Lectura del Archivo CSV al Seleccionar
+  if (inputArchivoCsv) {
+    inputArchivoCsv.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target.result;
+        parseAndPreviewCsv(text);
+      };
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
+
+  function parseAndPreviewCsv(csvText) {
+    const lines = csvText.split(/\r\n|\n/).map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) {
+      alert('⚠️ El archivo CSV está vacío.');
+      return;
+    }
+
+    const firstLine = lines[0];
+    const delimiter = firstLine.includes(';') ? ';' : ',';
+
+    const rawHeaders = firstLine.split(delimiter).map(h => h.replace(/^="|"$/g, '').replace(/^"|"$/g, '').trim().toLowerCase());
+    
+    const idxCedula = rawHeaders.findIndex(h => h.includes('cedula') || h.includes('dni'));
+    const idxNombre = rawHeaders.findIndex(h => h.includes('nombre') || h.includes('empleado'));
+    const idxCategoria = rawHeaders.findIndex(h => h.includes('categoria') || h.includes('cat'));
+    const idxCargo = rawHeaders.findIndex(h => h.includes('cargo'));
+    const idxDesde = rawHeaders.findIndex(h => h.includes('desde') || h.includes('ingreso') || h.includes('fecha'));
+    const idxRem = rawHeaders.findIndex(h => h.includes('remuneracion') || h.includes('sueldo') || h.includes('salario'));
+    const idxStatus = rawHeaders.findIndex(h => h.includes('status') || h.includes('estatus') || h.includes('estado'));
+    const idxCodigo = rawHeaders.findIndex(h => h.includes('codigo') || h.includes('serial'));
+
+    datosCsvParsedCache = [];
+    bodyTablaPrevisualizacionCsv.innerHTML = '';
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const cols = line.split(new RegExp(`${delimiter}(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)`)).map(c => c.replace(/^="|"$/g, '').replace(/^"|"$/g, '').trim());
+
+      let cedula = idxCedula !== -1 ? cols[idxCedula] || '' : cols[0] || '';
+      cedula = cedula.trim().toUpperCase();
+      if (cedula && !cedula.startsWith('V-') && !cedula.startsWith('E-') && /^\d+$/.test(cedula)) {
+        cedula = 'V-' + cedula;
+      }
+
+      let nombre = idxNombre !== -1 ? cols[idxNombre] || '' : cols[1] || '';
+      nombre = nombre.toUpperCase().trim();
+
+      let categoria = idxCategoria !== -1 ? cols[idxCategoria] || '' : cols[2] || '';
+      categoria = categoria.toUpperCase().trim();
+
+      let cargo = idxCargo !== -1 ? cols[idxCargo] || '' : cols[3] || '';
+      cargo = cargo.toUpperCase().trim();
+
+      let desde = idxDesde !== -1 ? cols[idxDesde] || '' : cols[4] || '';
+      desde = desde.trim();
+
+      let rem = idxRem !== -1 ? cols[idxRem] || '' : cols[5] || '';
+      rem = rem.replace(/^="|"$/g, '').replace(/^"|"$/g, '').trim();
+      if (rem.includes(',') && !rem.includes('.')) {
+        rem = rem.replace(',', '.');
+      }
+      rem = rem.replace(/[^\d\.]/g, '');
+
+      let status = idxStatus !== -1 ? cols[idxStatus] || '' : cols[6] || 'ACTIVO';
+      status = status.toUpperCase().trim() || 'ACTIVO';
+
+      let codigo = (idxCodigo !== -1 && cols[idxCodigo]) ? cols[idxCodigo].trim().toUpperCase() : '';
+      
+      if (!codigo && currentBulkData && currentBulkData.length > 0) {
+        const empExist = currentBulkData.find(e => normalizeClean(e.Cedula) === normalizeClean(cedula));
+        if (empExist && empExist.Codigo) codigo = empExist.Codigo;
+      }
+      if (!codigo) {
+        codigo = generarCodigoAlfanumerico();
+      }
+
+      if (cedula || nombre) {
+        datosCsvParsedCache.push({
+          Documento: '',
+          Cedula: cedula,
+          Nombre: nombre,
+          Categoria: categoria,
+          Cargo: cargo,
+          Desde: desde,
+          RemuneracionMensual: rem,
+          Codigo: codigo,
+          Status: status
+        });
+      }
+    }
+
+    if (datosCsvParsedCache.length === 0) {
+      alert('⚠️ No se pudieron extraer datos válidos del CSV. Verifica los encabezados.');
+      return;
+    }
+
+    datosCsvParsedCache.forEach((row, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><small class="text-muted">${idx + 1}</small></td>
+        <td class="fw-bold text-primary">${escapeHtml(row.Cedula)}</td>
+        <td>${escapeHtml(row.Nombre)}</td>
+        <td><small>${escapeHtml(row.Categoria)}</small></td>
+        <td><small>${escapeHtml(row.Cargo)}</small></td>
+        <td><small class="text-muted">${escapeHtml(row.Desde)}</small></td>
+        <td class="fw-bold text-success">${escapeHtml(row.RemuneracionMensual)}</td>
+        <td><code>${escapeHtml(row.Codigo)}</code></td>
+        <td><span class="badge ${row.Status === 'ACTIVO' ? 'bg-success' : 'bg-secondary'}">${escapeHtml(row.Status)}</span></td>
+      `;
+      bodyTablaPrevisualizacionCsv.appendChild(tr);
+    });
+
+    contenedorPrevisualizacionCsv.style.display = 'block';
+    badgeTotalCsvPrevisualizado.textContent = `${datosCsvParsedCache.length} Registros Procesados`;
+    btnProcesarCsvFinal.disabled = false;
+  }
+
+  // 3. Confirmar Carga Masiva y Guardar en Plataforma / Google Sheets
+  if (btnProcesarCsvFinal) {
+    btnProcesarCsvFinal.addEventListener('click', async () => {
+      if (!datosCsvParsedCache || datosCsvParsedCache.length === 0) return;
+
+      const confirmacion = confirm(`¿Estás seguro de que deseas reemplazar la tabla masiva actual con los ${datosCsvParsedCache.length} registros del CSV?`);
+      if (!confirmacion) return;
+
+      btnProcesarCsvFinal.disabled = true;
+      btnProcesarCsvFinal.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando en Google Sheets...';
+
+      currentBulkData = datosCsvParsedCache;
+      renderTablaMasiva(currentBulkData);
+
+      // Guardar en backend (Google Sheets)
+      if (useDemoMode || !appScriptUrl) {
+        demoDatabase = [...currentBulkData];
+        alert(`✅ [MODO DEMO] Carga Masiva procesada exitosamente con ${currentBulkData.length} registros.`);
+      } else {
+        try {
+          const payload = {
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            data: currentBulkData
+          };
+
+          const res = await fetch(appScriptUrl, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (json.success || json.status === 'success') {
+            alert(`✅ Carga Masiva guardada exitosamente en Google Sheets (${currentBulkData.length} registros).`);
+            
+            // Registrar auditoría EDICION GENERAL en Google Sheets
+            try {
+              const ipUser = await getUserPublicIp();
+              await fetch(`${appScriptUrl}?busqueda=${encodeURIComponent('EDICION GENERAL')}&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}&ip=${encodeURIComponent(ipUser)}`);
+            } catch(e) {}
+
+          } else {
+            alert(`❌ Error al guardar datos en Google Sheets: ${json.error || json.message}`);
+          }
+        } catch (e) {
+          alert('❌ Error de conexión al guardar cambios masivos: ' + e.message);
+        }
+      }
+
+      btnProcesarCsvFinal.disabled = false;
+      btnProcesarCsvFinal.innerHTML = '<i class="bi bi-cloud-upload-fill me-1"></i> Procesar y Guardar Cambios Masivos';
+
+      // Cerrar modal
+      const modalEl = document.getElementById('modalCsvMasivo');
+      const bsModal = bootstrap.Modal.getInstance(modalEl);
+      if (bsModal) bsModal.hide();
+    });
+  }
+
   function debeMostrarDescuentoIpasme(categoria) {
     if (!categoria) return true;
     const cat = categoria.toUpperCase().trim();
