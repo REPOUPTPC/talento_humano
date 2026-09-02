@@ -101,9 +101,38 @@
       </div>
     </div>
 
+    <!-- MODAL DE ALERTA CONSULTA -->
+    <div class="modal fade" id="modalAlertaConsulta" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Notificación</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4" id="modalAlertaConsultaBody">
+          </div>
+          <div class="modal-footer bg-light py-2">
+            <button type="button" class="btn btn-secondary fw-bold px-4" data-bs-dismiss="modal">Aceptar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
         // Configuración de la URL del Web App de Google Apps Script
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj54Xv54pt7gGvQP-xtv1cb5VotlaxyTs-p_vncMUJjb6KfwZlPRZjLULUNtBqUFTB/exec';
+
+        function showModalAlertConsulta(msg) {
+            const body = document.getElementById('modalAlertaConsultaBody');
+            if (body) body.textContent = msg;
+            const el = document.getElementById('modalAlertaConsulta');
+            if (el) {
+                const modal = bootstrap.Modal.getOrCreateInstance(el);
+                modal.show();
+            } else {
+                alert(msg);
+            }
+        }
 
         // URLs de las imágenes
         const URL_IMAGEN_CABECERA = 'https://repouptpc.github.io/talento_humano/img/cabecera.png';
@@ -666,7 +695,7 @@
 
                 if (!empleadoEncontrado) {
                     hidePdfProgress();
-                    alert("Error: No se encontraron datos para generar el PDF.");
+                    showModalAlertConsulta("Error: No se encontraron datos para generar el PDF.");
                     return;
                 }
 
@@ -844,7 +873,7 @@
             } catch (err) {
                 console.error("Error al obtener datos para PDF:", err);
                 hidePdfProgress();
-                alert("Error al obtener datos para generar el PDF.");
+                showModalAlertConsulta("Error al obtener datos para generar el PDF.");
             }
         }
     </script>

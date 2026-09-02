@@ -99,6 +99,252 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnFiltrarStats = document.getElementById('btnFiltrarStats');
   const btnLimpiarFiltrarStats = document.getElementById('btnLimpiarFiltrarStats');
 
+  // --- HELPER DE ALERTAS CON MODAL ---
+  const modalAlertaEl = document.getElementById('modalAlertaGenerica');
+  const modalAlertaBs = modalAlertaEl ? new bootstrap.Modal(modalAlertaEl) : null;
+  const headerAlertaGenerica = document.getElementById('headerAlertaGenerica');
+  const titleAlertaGenerica = document.getElementById('titleAlertaGenerica');
+  const bodyAlertaGenerica = document.getElementById('bodyAlertaGenerica');
+
+  function showModalAlert(message, type = 'info', title = null) {
+    if (!modalAlertaBs) {
+      alert(message);
+      return;
+    }
+    
+    let bgClass = 'bg-primary';
+    let icon = 'bi-info-circle';
+    let defaultTitle = 'Notificación del Sistema';
+
+    const msgStr = String(message || '');
+
+    if (type === 'success' || msgStr.includes('✅')) {
+      bgClass = 'bg-success';
+      icon = 'bi-check-circle-fill';
+      defaultTitle = 'Operación Exitosa';
+    } else if (type === 'danger' || type === 'error' || msgStr.includes('❌')) {
+      bgClass = 'bg-danger';
+      icon = 'bi-exclamation-triangle-fill';
+      defaultTitle = 'Atención / Error';
+    } else if (type === 'warning' || msgStr.includes('⚠️')) {
+      bgClass = 'bg-warning text-dark';
+      icon = 'bi-exclamation-triangle';
+      defaultTitle = 'Advertencia';
+    }
+
+    if (headerAlertaGenerica) headerAlertaGenerica.className = `modal-header ${bgClass} text-white`;
+    if (titleAlertaGenerica) titleAlertaGenerica.innerHTML = `<i class="bi ${icon} me-2"></i>${title || defaultTitle}`;
+    if (bodyAlertaGenerica) bodyAlertaGenerica.innerHTML = `<p class="mb-0 fs-6">${escapeHtml(msgStr).replace(/\n/g, '<br>')}</p>`;
+
+    modalAlertaBs.show();
+  }
+
+  function handleAuthFailure(msg) {
+    appScriptUser = '';
+    appScriptApiKey = '';
+    localStorage.removeItem('uct_user');
+    localStorage.removeItem('uct_api_key');
+    currentUserRole = 'N/A';
+
+    if (inputAppScriptUser) inputAppScriptUser.value = '';
+    if (inputAppScriptApiKey) inputAppScriptApiKey.value = '';
+    if (modalInputUser) modalInputUser.value = '';
+    if (modalInputApiKey) modalInputApiKey.value = '';
+
+    updateBannerStatus();
+    updateRolePermissions();
+
+    const modalAlertBox = document.getElementById('modalAuthAlertBox');
+    if (modalAlertBox) {
+      modalAlertBox.textContent = `❌ ${msg || 'Acceso no autorizado. Por favor ingresa tu Usuario y Clave.'}`;
+      modalAlertBox.classList.remove('d-none');
+    }
+
+    if (modalCredencialesBs) {
+      modalCredencialesBs.show();
+    }
+  }
+
+  function updateRolePermissions() {
+    const tabInstruccionesLi = document.getElementById('tab-instrucciones-li');
+    const paneInstrucciones = document.getElementById('pane-instrucciones');
+    const btnCambiarPasswordHeader = document.getElementById('btnCambiarPasswordHeader');
+    const btnCerrarSesionHeader = document.getElementById('btnCerrarSesionHeader');
+
+    if (appScriptUser && appScriptApiKey) {
+      if (btnCambiarPasswordHeader) btnCambiarPasswordHeader.classList.remove('d-none');
+      if (btnCerrarSesionHeader) btnCerrarSesionHeader.classList.remove('d-none');
+    } else {
+      if (btnCambiarPasswordHeader) btnCambiarPasswordHeader.classList.add('d-none');
+      if (btnCerrarSesionHeader) btnCerrarSesionHeader.classList.add('d-none');
+    }
+
+    // Visibilidad de pestaña Instrucciones reservada sólo para SUPER_ADMIN
+    if (currentUserRole === 'SUPER_ADMIN') {
+      if (tabInstruccionesLi) tabInstruccionesLi.classList.remove('d-none');
+      if (paneInstrucciones) paneInstrucciones.classList.remove('d-none');
+    } else {
+      if (tabInstruccionesLi) tabInstruccionesLi.classList.add('d-none');
+      if (paneInstrucciones) paneInstrucciones.classList.add('d-none');
+
+      const currentHash = window.location.hash || '#consulta';
+      if (currentHash === '#instrucciones') {
+        window.location.hash = '#consulta';
+        const btnConsulta = document.getElementById('tab-consulta-btn');
+        if (btnConsulta) {
+          const tab = bootstrap.Tab.getOrCreateInstance(btnConsulta);
+          tab.show();
+        }
+      }
+    }
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem('uct_user');
+    localStorage.removeItem('uct_api_key');
+    localStorage.setItem('uct_demo_mode', 'false');
+    appScriptUser = '';
+    appScriptApiKey = '';
+    useDemoMode = false;
+    currentUserRole = 'N/A';
+
+    if (inputAppScriptUser) inputAppScriptUser.value = '';
+    if (inputAppScriptApiKey) inputAppScriptApiKey.value = '';
+    if (modalInputUser) modalInputUser.value = '';
+    if (modalInputApiKey) modalInputApiKey.value = '';
+
+    const modalAlertBox = document.getElementById('modalAuthAlertBox');
+    if (modalAlertBox) modalAlertBox.classList.add('d-none');
+
+    updateBannerStatus();
+    updateRolePermissions();
+
+    if (modalCredencialesBs) {
+      modalCredencialesBs.show();
+    }
+  }
+
+  const btnCerrarSesionHeader = document.getElementById('btnCerrarSesionHeader');
+  if (btnCerrarSesionHeader) {
+    btnCerrarSesionHeader.addEventListener('click', () => {
+      cerrarSesion();
+    });
+  }
+
+  // --- MODAL DE CAMBIAR CONTRASEÑA ---
+  const btnCambiarPasswordHeader = document.getElementById('btnCambiarPasswordHeader');
+  const modalCambiarPasswordEl = document.getElementById('modalCambiarPassword');
+  const modalCambiarPasswordBs = modalCambiarPasswordEl ? new bootstrap.Modal(modalCambiarPasswordEl) : null;
+  const formCambiarPassword = document.getElementById('formCambiarPassword');
+  const inputPassActual = document.getElementById('inputPassActual');
+  const inputPassNueva = document.getElementById('inputPassNueva');
+  const inputPassConfirm = document.getElementById('inputPassConfirm');
+  const cambiarPassError = document.getElementById('cambiarPassError');
+  const btnSubmitCambiarPass = document.getElementById('btnSubmitCambiarPass');
+  const spinnerCambiarPass = document.getElementById('spinnerCambiarPass');
+
+  if (btnCambiarPasswordHeader) {
+    btnCambiarPasswordHeader.addEventListener('click', () => {
+      if (formCambiarPassword) formCambiarPassword.reset();
+      if (cambiarPassError) cambiarPassError.classList.add('d-none');
+      if (modalCambiarPasswordBs) modalCambiarPasswordBs.show();
+    });
+  }
+
+  if (formCambiarPassword) {
+    formCambiarPassword.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (cambiarPassError) cambiarPassError.classList.add('d-none');
+
+      const passActual = inputPassActual ? inputPassActual.value.trim() : '';
+      const passNueva = inputPassNueva ? inputPassNueva.value.trim() : '';
+      const passConfirm = inputPassConfirm ? inputPassConfirm.value.trim() : '';
+
+      if (passActual !== appScriptApiKey) {
+        if (cambiarPassError) {
+          cambiarPassError.textContent = 'La contraseña actual ingresada no coincide.';
+          cambiarPassError.classList.remove('d-none');
+        }
+        return;
+      }
+
+      if (!passNueva) {
+        if (cambiarPassError) {
+          cambiarPassError.textContent = 'La nueva contraseña no puede estar vacía.';
+          cambiarPassError.classList.remove('d-none');
+        }
+        return;
+      }
+
+      if (passNueva !== passConfirm) {
+        if (cambiarPassError) {
+          cambiarPassError.textContent = 'La nueva contraseña y la confirmación no coinciden.';
+          cambiarPassError.classList.remove('d-none');
+        }
+        return;
+      }
+
+      if (useDemoMode) {
+        const adminObj = demoAdmins.find(a => a.usuario.toLowerCase() === appScriptUser.toLowerCase());
+        if (adminObj) adminObj.api_key = passNueva;
+
+        appScriptApiKey = passNueva;
+        localStorage.setItem('uct_api_key', passNueva);
+        if (inputAppScriptApiKey) inputAppScriptApiKey.value = passNueva;
+
+        if (modalCambiarPasswordBs) modalCambiarPasswordBs.hide();
+        formCambiarPassword.reset();
+        showModalAlert('✅ Contraseña actualizada exitosamente en Modo Demostración.', 'success');
+        return;
+      }
+
+      if (btnSubmitCambiarPass) btnSubmitCambiarPass.disabled = true;
+      if (spinnerCambiarPass) spinnerCambiarPass.classList.remove('d-none');
+
+      try {
+        const res = await fetch(appScriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'changePassword',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            new_api_key: passNueva
+          })
+        });
+        const json = await res.json();
+
+        if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
+          if (modalCambiarPasswordBs) modalCambiarPasswordBs.hide();
+          handleAuthFailure(json.message);
+          return;
+        }
+
+        if (json.success || json.status === 'success') {
+          appScriptApiKey = passNueva;
+          localStorage.setItem('uct_api_key', passNueva);
+          if (inputAppScriptApiKey) inputAppScriptApiKey.value = passNueva;
+          if (modalCambiarPasswordBs) modalCambiarPasswordBs.hide();
+          formCambiarPassword.reset();
+          showModalAlert('✅ Contraseña actualizada exitosamente.', 'success');
+        } else {
+          if (cambiarPassError) {
+            cambiarPassError.textContent = json.error || json.message || 'Error al cambiar la contraseña.';
+            cambiarPassError.classList.remove('d-none');
+          }
+        }
+      } catch (err) {
+        if (cambiarPassError) {
+          cambiarPassError.textContent = 'Error de conexión: ' + err.message;
+          cambiarPassError.classList.remove('d-none');
+        }
+      } finally {
+        if (btnSubmitCambiarPass) btnSubmitCambiarPass.disabled = false;
+        if (spinnerCambiarPass) spinnerCambiarPass.classList.add('d-none');
+      }
+    });
+  }
+
   // --- INITIALIZATION ---
   initUI();
   setupHashNavigation();
@@ -180,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bannerTitle.textContent = 'Conectado a Google Sheets en Vivo';
       bannerText.textContent = `Sincronizado con Apps Script como usuario "${appScriptUser}".`;
     }
+    updateRolePermissions();
   }
 
   // --- MODAL DE CREDENCIALES ---
@@ -224,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!useDemoMode) {
         testConnection(true);
       } else {
-        alert('✅ Configuración de Modo Demostración guardada correctamente.');
+        showModalAlert('✅ Configuración de Modo Demostración guardada correctamente.', 'success');
       }
     });
   }
@@ -266,6 +513,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showTestResult('success', `<strong>¡Conexión Exitosa!</strong><br>Usuario autenticado: <strong>${escapeHtml(appScriptUser)}</strong> | Rol: <strong>${currentUserRole}</strong>`);
         }
 
+        updateRolePermissions();
+
         // Handle SUPER_ADMIN privileges
         if (currentUserRole === 'SUPER_ADMIN') {
           secAdminManagement.classList.remove('d-none');
@@ -280,7 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
         roleBadgeConfig.textContent = 'Rol: No Autorizado';
         secAdminManagement.classList.add('d-none');
 
-        showTestResult('danger', `<strong>Acceso No Autorizado:</strong> ${data.message || 'Usuario o API Key incorrectos.'}`);
+        updateRolePermissions();
+        handleAuthFailure(data.message || 'Usuario o API Key incorrectos.');
       }
     } catch (err) {
       showTestResult('danger', `<strong>Error de Red / CORS:</strong> ${err.message}. Verifica la URL e internet.`);
@@ -348,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (useDemoMode || !appScriptUrl) {
           demoAdmins.push({ usuario: newUsr, api_key: newKey, rol: newRol, status: "ACTIVO" });
           renderTablaAdmins(demoAdmins);
-          alert(`✅ Administrador "${newUsr}" registrado exitosamente (Modo Demo).`);
+          showModalAlert(`✅ Administrador "${newUsr}" registrado exitosamente (Modo Demo).`, 'success');
           formNuevoAdmin.reset();
         } else {
           const res = await fetch(appScriptUrl, {
@@ -365,15 +615,15 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const data = await res.json();
           if (data.success) {
-            alert(`✅ ${data.message || 'Administrador registrado exitosamente.'}`);
+            showModalAlert(`✅ ${data.message || 'Administrador registrado exitosamente.'}`, 'success');
             formNuevoAdmin.reset();
             cargarListaAdmins();
           } else {
-            alert(`❌ Error: ${data.message || data.error}`);
+            showModalAlert(`❌ Error: ${data.message || data.error}`, 'danger');
           }
         }
       } catch (err) {
-        alert('❌ Error de red al agregar administrador: ' + err.message);
+        showModalAlert('❌ Error de red al agregar administrador: ' + err.message, 'danger');
       } finally {
         btnCrear.disabled = false;
       }
@@ -416,7 +666,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (json && Array.isArray(json.data)) {
           arr = json.data;
         } else if (json && json.status === 'error') {
-          alert(`❌ Acceso No Autorizado: ${json.message || 'Verifica tus credenciales'}`);
+          if (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado')) {
+            handleAuthFailure(json.message);
+          } else {
+            showModalAlert(`❌ Error: ${json.message || 'Verifica tus credenciales'}`, 'danger');
+          }
         }
 
         if (arr.length > 0) {
@@ -487,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (currentIndividualRecord && currentIndividualRecord.Cedula) {
       generarPDF(currentIndividualRecord.Cedula);
     } else {
-      alert("No se identificó el código o serial del expediente.");
+      showModalAlert("No se identificó el código o serial del expediente.", "warning");
     }
   });
 
@@ -549,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         renderIndividualResult(currentIndividualRecord);
         modalEdicionIndividual.hide();
-        alert('✅ Expediente actualizado exitosamente (Modo Demostración).');
+        showModalAlert('✅ Expediente actualizado exitosamente (Modo Demostración).', 'success');
       } else {
         const res = await fetch(appScriptUrl, {
           method: 'POST',
@@ -568,13 +822,18 @@ document.addEventListener('DOMContentLoaded', () => {
           currentIndividualRecord = { ...currentIndividualRecord, ...updatedData };
           renderIndividualResult(currentIndividualRecord);
           modalEdicionIndividual.hide();
-          alert('✅ Expediente actualizado exitosamente en Google Sheets.');
+          showModalAlert('✅ Expediente actualizado exitosamente en Google Sheets.', 'success');
         } else {
-          alert('❌ Error al actualizar: ' + (json.error || json.message));
+          if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
+            modalEdicionIndividual.hide();
+            handleAuthFailure(json.message);
+          } else {
+            showModalAlert('❌ Error al actualizar: ' + (json.error || json.message), 'danger');
+          }
         }
       }
     } catch (err) {
-      alert('❌ Error al guardar cambios: ' + err.message);
+      showModalAlert('❌ Error al guardar cambios: ' + err.message, 'danger');
     } finally {
       btnGuardarEdicionIndividual.disabled = false;
       spinnerGuardarInd.classList.add('d-none');
@@ -599,12 +858,16 @@ document.addEventListener('DOMContentLoaded', () => {
           currentBulkData = json.data;
           renderTablaMasiva(currentBulkData, json.headers || defaultHeaders);
         } else {
-          alert('Error al cargar datos de la hoja: ' + (json.message || json.error));
+          if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
+            handleAuthFailure(json.message);
+          } else {
+            showModalAlert('Error al cargar datos de la hoja: ' + (json.message || json.error), 'danger');
+          }
         }
       }
       modifiedRows.clear();
     } catch (err) {
-      alert('Error de conexión al cargar datos masivos: ' + err.message);
+      showModalAlert('Error de conexión al cargar datos masivos: ' + err.message, 'danger');
     } finally {
       btnCargarMasivo.disabled = false;
       btnCargarMasivo.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i> Recargar Datos';
@@ -704,7 +967,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Guardar Cambios Masivos
   btnGuardarMasivo.addEventListener('click', async () => {
     if (modifiedRows.size === 0) {
-      alert('ℹ️ No se han realizado modificaciones en la tabla.');
+      showModalAlert('ℹ️ No se han realizado modificaciones en la tabla.', 'info');
       return;
     }
 
@@ -739,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
             demoDatabase[matchIdx] = { ...demoDatabase[matchIdx], ...item.data };
           }
         });
-        alert(`✅ Se guardaron los cambios masivos de ${payloadRows.length} fila(s) en Modo Demostración.`);
+        showModalAlert(`✅ Se guardaron los cambios masivos de ${payloadRows.length} fila(s) en Modo Demostración.`, 'success');
         modifiedRows.clear();
         cargarDatosMasivos();
       } else {
@@ -755,15 +1018,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const json = await res.json();
         if (json.success) {
-          alert(`✅ Se actualizaron exitosamente ${payloadRows.length} fila(s) en tu Hoja de Google Sheets.`);
+          showModalAlert(`✅ Se actualizaron exitosamente ${payloadRows.length} fila(s) en tu Hoja de Google Sheets.`, 'success');
           modifiedRows.clear();
           cargarDatosMasivos();
         } else {
-          alert('❌ Error al realizar actualización masiva: ' + (json.error || json.message));
+          if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
+            handleAuthFailure(json.message);
+          } else {
+            showModalAlert('❌ Error al realizar actualización masiva: ' + (json.error || json.message), 'danger');
+          }
         }
       }
     } catch (err) {
-      alert('❌ Error de red al guardar masivo: ' + err.message);
+      showModalAlert('❌ Error de red al guardar masivo: ' + err.message, 'danger');
     } finally {
       btnGuardarMasivo.disabled = false;
       btnGuardarMasivo.innerHTML = '<i class="bi bi-floppy-fill me-1"></i> Guardar Cambios Masivos';
@@ -1242,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error("Error exportando reporte:", err);
       hidePdfProgress();
-      alert("Error al exportar el reporte a PDF: " + err.message);
+      showModalAlert("Error al exportar el reporte a PDF: " + err.message, "danger");
     }
   }
 
@@ -1262,7 +1529,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!emp) {
         hidePdfProgress();
-        alert("Error: No se encontraron datos para generar el PDF.");
+        showModalAlert("Error: No se encontraron datos para generar el PDF.", "danger");
         return;
       }
 
@@ -1427,7 +1694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error("Error generando PDF:", err);
       hidePdfProgress();
-      alert("Error al generar el PDF: " + err.message);
+      showModalAlert("Error al generar el PDF: " + err.message, "danger");
     }
   }
 
@@ -1784,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function parseAndPreviewCsv(csvText) {
     const lines = csvText.split(/\r\n|\n/).map(l => l.trim()).filter(l => l.length > 0);
     if (lines.length === 0) {
-      alert('⚠️ El archivo CSV está vacío.');
+      showModalAlert('⚠️ El archivo CSV está vacío.', 'warning');
       return;
     }
 
@@ -1863,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (datosCsvParsedCache.length === 0) {
-      alert('⚠️ No se pudieron extraer datos válidos del CSV. Verifica los encabezados.');
+      showModalAlert('⚠️ No se pudieron extraer datos válidos del CSV. Verifica los encabezados.', 'warning');
       return;
     }
 
@@ -1905,7 +2172,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Guardar en backend (Google Sheets)
       if (useDemoMode || !appScriptUrl) {
         demoDatabase = [...currentBulkData];
-        alert(`✅ [MODO DEMO] Carga Masiva procesada exitosamente con ${currentBulkData.length} registros.`);
+        showModalAlert(`✅ [MODO DEMO] Carga Masiva procesada exitosamente con ${currentBulkData.length} registros.`, 'success');
       } else {
         try {
           const payload = {
@@ -1920,7 +2187,7 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const json = await res.json();
           if (json.success || json.status === 'success') {
-            alert(`✅ Carga Masiva guardada exitosamente en Google Sheets (${currentBulkData.length} registros).`);
+            showModalAlert(`✅ Carga Masiva guardada exitosamente en Google Sheets (${currentBulkData.length} registros).`, 'success');
             
             // Registrar auditoría EDICION GENERAL en Google Sheets
             try {
@@ -1929,10 +2196,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch(e) {}
 
           } else {
-            alert(`❌ Error al guardar datos en Google Sheets: ${json.error || json.message}`);
+            showModalAlert(`❌ Error al guardar datos en Google Sheets: ${json.error || json.message}`, 'danger');
           }
         } catch (e) {
-          alert('❌ Error de conexión al guardar cambios masivos: ' + e.message);
+          showModalAlert('❌ Error de conexión al guardar cambios masivos: ' + e.message, 'danger');
         }
       }
 
