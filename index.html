@@ -259,6 +259,9 @@
                   <div class="input-group">
                     <span class="input-group-text bg-light text-primary"><i class="bi bi-key"></i></span>
                     <input type="password" class="form-control" id="appScriptApiKey" placeholder="ej. admin123" required>
+                    <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="appScriptApiKey" title="Mostrar/Ocultar contraseña">
+                      <i class="bi bi-eye"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -299,7 +302,12 @@
               </div>
               <div class="col-md-4">
                 <label class="form-label small fw-bold">API Key / Token</label>
-                <input type="text" class="form-control form-control-sm" id="newAdminKey" placeholder="ej. token_secret_123" required>
+                <div class="input-group input-group-sm">
+                  <input type="password" class="form-control form-control-sm" id="newAdminKey" placeholder="ej. token_secret_123" required>
+                  <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="newAdminKey" title="Mostrar/Ocultar contraseña">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                </div>
               </div>
               <div class="col-md-4">
                 <label class="form-label small fw-bold">Rol Asignado</label>
@@ -961,7 +969,12 @@ function findColumnIndexFlex(headers, keywords) {
             </div>
             <div class="mb-3">
               <label class="form-label fw-bold small">API Key / Token de Acceso</label>
-              <input type="password" class="form-control" id="modalInputApiKey" placeholder="ej. admin123" required>
+              <div class="input-group">
+                <input type="password" class="form-control" id="modalInputApiKey" placeholder="ej. admin123" required>
+                <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="modalInputApiKey" title="Mostrar/Ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">
               <i class="bi bi-key-fill me-1"></i> Conectar al Sistema
@@ -1125,15 +1138,30 @@ function findColumnIndexFlex(headers, keywords) {
             <div id="cambiarPassError" class="alert alert-danger py-2 small d-none"></div>
             <div class="mb-3">
               <label class="form-label fw-bold small">Contraseña / API Key Actual</label>
-              <input type="password" class="form-control" id="inputPassActual" required placeholder="Tu clave actual">
+              <div class="input-group">
+                <input type="password" class="form-control" id="inputPassActual" required placeholder="Tu clave actual">
+                <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="inputPassActual" title="Mostrar/Ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="mb-3">
               <label class="form-label fw-bold small">Nueva Contraseña / API Key</label>
-              <input type="password" class="form-control" id="inputPassNueva" required placeholder="Ingresa nueva clave">
+              <div class="input-group">
+                <input type="password" class="form-control" id="inputPassNueva" required placeholder="Ingresa nueva clave">
+                <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="inputPassNueva" title="Mostrar/Ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <div class="mb-3">
               <label class="form-label fw-bold small">Confirmar Nueva Contraseña</label>
-              <input type="password" class="form-control" id="inputPassConfirm" required placeholder="Repite la nueva clave">
+              <div class="input-group">
+                <input type="password" class="form-control" id="inputPassConfirm" required placeholder="Repite la nueva clave">
+                <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="inputPassConfirm" title="Mostrar/Ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
             </div>
             <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-dark" id="btnSubmitCambiarPass">
               <span class="spinner-border spinner-border-sm me-1 d-none" id="spinnerCambiarPass"></span>

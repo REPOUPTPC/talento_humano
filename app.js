@@ -99,6 +99,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnFiltrarStats = document.getElementById('btnFiltrarStats');
   const btnLimpiarFiltrarStats = document.getElementById('btnLimpiarFiltrarStats');
 
+  // --- MOSTRAR / OCULTAR CONTRASEÑA (OJITOS) ---
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-toggle-password');
+    if (!btn) return;
+    e.preventDefault();
+
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (icon) {
+        icon.className = 'bi bi-eye-slash';
+      }
+    } else {
+      input.type = 'password';
+      if (icon) {
+        icon.className = 'bi bi-eye';
+      }
+    }
+  });
+
   // --- HELPER DE ALERTAS CON MODAL ---
   const modalAlertaEl = document.getElementById('modalAlertaGenerica');
   const modalAlertaBs = modalAlertaEl ? new bootstrap.Modal(modalAlertaEl) : null;
