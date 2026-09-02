@@ -172,6 +172,80 @@ document.addEventListener('DOMContentLoaded', () => {
     return tieneLetra && tieneNumero;
   }
 
+  function aplicarValidacionRealTimePassword(inputEl, feedbackEl, confirmInputEl = null, confirmFeedbackEl = null) {
+    if (!inputEl) return;
+
+    function validarPrincipal() {
+      const val = inputEl.value.trim();
+      if (!val) {
+        inputEl.classList.remove('is-valid', 'is-invalid');
+        if (feedbackEl) {
+          feedbackEl.textContent = 'Debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres.';
+          feedbackEl.className = 'small mt-1 text-muted';
+        }
+        if (confirmInputEl) validarConfirmacion();
+        return false;
+      }
+
+      if (esPasswordValida(val)) {
+        inputEl.classList.remove('is-invalid');
+        inputEl.classList.add('is-valid');
+        if (feedbackEl) {
+          feedbackEl.textContent = '✓ Contraseña alfanumérica válida (mínimo 6 caracteres).';
+          feedbackEl.className = 'small mt-1 text-success fw-bold';
+        }
+      } else {
+        inputEl.classList.remove('is-valid');
+        inputEl.classList.add('is-invalid');
+        if (feedbackEl) {
+          feedbackEl.textContent = '❌ La contraseña debe ser ALFANUMÉRICA (combinar letras y números) y tener mínimo 6 caracteres.';
+          feedbackEl.className = 'small mt-1 text-danger fw-bold';
+        }
+      }
+
+      if (confirmInputEl) validarConfirmacion();
+    }
+
+    function validarConfirmacion() {
+      if (!confirmInputEl) return;
+      const mainVal = inputEl.value.trim();
+      const confirmVal = confirmInputEl.value.trim();
+
+      if (!confirmVal) {
+        confirmInputEl.classList.remove('is-valid', 'is-invalid');
+        if (confirmFeedbackEl) {
+          confirmFeedbackEl.textContent = '';
+          confirmFeedbackEl.className = 'small mt-1 text-muted';
+        }
+        return false;
+      }
+
+      if (confirmVal === mainVal && esPasswordValida(mainVal)) {
+        confirmInputEl.classList.remove('is-invalid');
+        confirmInputEl.classList.add('is-valid');
+        if (confirmFeedbackEl) {
+          confirmFeedbackEl.textContent = '✓ Las contraseñas coinciden correctamente.';
+          confirmFeedbackEl.className = 'small mt-1 text-success fw-bold';
+        }
+      } else {
+        confirmInputEl.classList.remove('is-valid');
+        confirmInputEl.classList.add('is-invalid');
+        if (confirmFeedbackEl) {
+          confirmFeedbackEl.textContent = '❌ Las contraseñas no coinciden.';
+          confirmFeedbackEl.className = 'small mt-1 text-danger fw-bold';
+        }
+      }
+    }
+
+    inputEl.addEventListener('blur', validarPrincipal);
+    inputEl.addEventListener('input', validarPrincipal);
+
+    if (confirmInputEl) {
+      confirmInputEl.addEventListener('blur', validarConfirmacion);
+      confirmInputEl.addEventListener('input', validarConfirmacion);
+    }
+  }
+
   function handleAuthFailure(msg) {
     appScriptUser = '';
     appScriptApiKey = '';
@@ -276,9 +350,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSubmitCambiarPass = document.getElementById('btnSubmitCambiarPass');
   const spinnerCambiarPass = document.getElementById('spinnerCambiarPass');
 
+  if (inputPassNueva) {
+    aplicarValidacionRealTimePassword(
+      inputPassNueva,
+      document.getElementById('feedbackPassNueva'),
+      inputPassConfirm,
+      document.getElementById('feedbackPassConfirm')
+    );
+  }
+
   if (btnCambiarPasswordHeader) {
     btnCambiarPasswordHeader.addEventListener('click', () => {
       if (formCambiarPassword) formCambiarPassword.reset();
+      if (inputPassActual) inputPassActual.classList.remove('is-valid', 'is-invalid');
+      if (inputPassNueva) inputPassNueva.classList.remove('is-valid', 'is-invalid');
+      if (inputPassConfirm) inputPassConfirm.classList.remove('is-valid', 'is-invalid');
+      const f1 = document.getElementById('feedbackPassNueva');
+      const f2 = document.getElementById('feedbackPassConfirm');
+      if (f1) { f1.textContent = 'Debe ser alfanumérica (combinar letras y números) y tener mínimo 6 caracteres.'; f1.className = 'small mt-1 text-muted'; }
+      if (f2) { f2.textContent = ''; f2.className = 'small mt-1 text-muted'; }
       if (cambiarPassError) cambiarPassError.classList.add('d-none');
       if (modalCambiarPasswordBs) modalCambiarPasswordBs.show();
     });
@@ -299,21 +389,33 @@ document.addEventListener('DOMContentLoaded', () => {
           cambiarPassError.textContent = 'La contraseña actual ingresada no coincide.';
           cambiarPassError.classList.remove('d-none');
         }
+        if (inputPassActual) {
+          inputPassActual.classList.remove('is-valid');
+          inputPassActual.classList.add('is-invalid');
+        }
         return;
       }
 
       if (!esPasswordValida(passNueva)) {
         if (cambiarPassError) {
-          cambiarPassError.textContent = 'La nueva contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres.';
+          cambiarPassError.textContent = 'La nueva contraseña debe ser ALFANUMÉRICA (combinar letras y números) y tener como mínimo 6 caracteres.';
           cambiarPassError.classList.remove('d-none');
+        }
+        if (inputPassNueva) {
+          inputPassNueva.classList.remove('is-valid');
+          inputPassNueva.classList.add('is-invalid');
         }
         return;
       }
 
       if (passNueva !== passConfirm) {
         if (cambiarPassError) {
-          cambiarPassError.textContent = 'La nueva contraseña y la confirmación no coinciden.';
+          cambiarPassError.textContent = 'La nueva contraseña y su confirmación no coinciden.';
           cambiarPassError.classList.remove('d-none');
+        }
+        if (inputPassConfirm) {
+          inputPassConfirm.classList.remove('is-valid');
+          inputPassConfirm.classList.add('is-invalid');
         }
         return;
       }
@@ -688,6 +790,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnSubmitEditAdmin = document.getElementById('btnSubmitEditAdmin');
   const spinnerEditAdmin = document.getElementById('spinnerEditAdmin');
 
+  const newAdminKeyInput = document.getElementById('newAdminKey');
+  if (newAdminKeyInput) {
+    aplicarValidacionRealTimePassword(newAdminKeyInput, document.getElementById('feedbackNewAdminKey'));
+  }
+
+  if (inputEditAdminKey) {
+    aplicarValidacionRealTimePassword(inputEditAdminKey, document.getElementById('feedbackEditAdminKey'));
+  }
+
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-editar-admin-clave');
     if (!btn) return;
@@ -695,7 +806,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!targetUser) return;
 
     if (inputEditAdminUser) inputEditAdminUser.value = targetUser;
-    if (inputEditAdminKey) inputEditAdminKey.value = '';
+    if (inputEditAdminKey) {
+      inputEditAdminKey.value = '';
+      inputEditAdminKey.classList.remove('is-valid', 'is-invalid');
+    }
+    const fe = document.getElementById('feedbackEditAdminKey');
+    if (fe) { fe.textContent = 'Debe ser alfanumérica (combinar letras y números) y tener mínimo 6 caracteres.'; fe.className = 'small mt-1 text-muted'; }
     if (editAdminError) editAdminError.classList.add('d-none');
     if (modalEditarAdminBs) modalEditarAdminBs.show();
   });
