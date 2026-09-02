@@ -29,10 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentAdminsList = [];
 
   // State management via localStorage
-  let appScriptUrl = localStorage.getItem('uct_app_script_url') || '';
+  const DEFAULT_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzj54Xv54pt7gGvQP-xtv1cb5VotlaxyTs-p_vncMUJjb6KfwZlPRZjLULUNtBqUFTB/exec';
+  let appScriptUrl = localStorage.getItem('uct_app_script_url') || DEFAULT_APP_SCRIPT_URL;
   let appScriptUser = localStorage.getItem('uct_user') || '';
   let appScriptApiKey = localStorage.getItem('uct_api_key') || '';
-  let useDemoMode = localStorage.getItem('uct_demo_mode') === 'true' || (!appScriptUrl && !appScriptUser);
+  let useDemoMode = localStorage.getItem('uct_demo_mode') === 'true';
   let currentUserRole = 'N/A';
 
   // Last fetched individual result & bulk table memory data
@@ -60,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCredencialesEl = document.getElementById('modalCredencialesRequeridas');
   const modalCredencialesBs = modalCredencialesEl ? new bootstrap.Modal(modalCredencialesEl) : null;
   const formModalCredenciales = document.getElementById('form-modal-credenciales');
-  const modalInputUrl = document.getElementById('modalInputUrl');
   const modalInputUser = document.getElementById('modalInputUser');
   const modalInputApiKey = document.getElementById('modalInputApiKey');
 
@@ -104,19 +104,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setupHashNavigation();
 
   function initUI() {
-    inputAppScriptUrl.value = appScriptUrl;
-    inputAppScriptUser.value = appScriptUser;
-    inputAppScriptApiKey.value = appScriptApiKey;
-    switchDemoMode.checked = useDemoMode;
+    if (inputAppScriptUrl) inputAppScriptUrl.value = appScriptUrl;
+    if (inputAppScriptUser) inputAppScriptUser.value = appScriptUser;
+    if (inputAppScriptApiKey) inputAppScriptApiKey.value = appScriptApiKey;
+    if (switchDemoMode) switchDemoMode.checked = useDemoMode;
 
     updateBannerStatus();
 
-    // Check credentials requirement
-    if (!useDemoMode && (!appScriptUrl || !appScriptUser || !appScriptApiKey)) {
+    // Check credentials requirement: Prompt for User & API Key if missing
+    if (!useDemoMode && (!appScriptUser || !appScriptApiKey)) {
       if (modalCredencialesBs) {
-        modalInputUrl.value = appScriptUrl;
-        modalInputUser.value = appScriptUser;
-        modalInputApiKey.value = appScriptApiKey;
+        if (modalInputUser) modalInputUser.value = appScriptUser;
+        if (modalInputApiKey) modalInputApiKey.value = appScriptApiKey;
         modalCredencialesBs.show();
       }
     } else if (!useDemoMode && appScriptUrl && appScriptUser && appScriptApiKey) {
@@ -187,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (formModalCredenciales) {
     formModalCredenciales.addEventListener('submit', (e) => {
       e.preventDefault();
-      appScriptUrl = modalInputUrl.value.trim();
+      appScriptUrl = (inputAppScriptUrl && inputAppScriptUrl.value.trim()) ? inputAppScriptUrl.value.trim() : DEFAULT_APP_SCRIPT_URL;
       appScriptUser = modalInputUser.value.trim();
       appScriptApiKey = modalInputApiKey.value.trim();
       useDemoMode = false;
@@ -197,10 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem('uct_api_key', appScriptApiKey);
       localStorage.setItem('uct_demo_mode', 'false');
 
-      inputAppScriptUrl.value = appScriptUrl;
-      inputAppScriptUser.value = appScriptUser;
-      inputAppScriptApiKey.value = appScriptApiKey;
-      switchDemoMode.checked = false;
+      if (inputAppScriptUrl) inputAppScriptUrl.value = appScriptUrl;
+      if (inputAppScriptUser) inputAppScriptUser.value = appScriptUser;
+      if (inputAppScriptApiKey) inputAppScriptApiKey.value = appScriptApiKey;
+      if (switchDemoMode) switchDemoMode.checked = false;
 
       if (modalCredencialesBs) modalCredencialesBs.hide();
       testConnection(true);
@@ -208,36 +207,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- CONFIG FORM & TEST CONNECTION ---
-  formConfig.addEventListener('submit', (e) => {
-    e.preventDefault();
-    appScriptUrl = inputAppScriptUrl.value.trim();
-    appScriptUser = inputAppScriptUser.value.trim();
-    appScriptApiKey = inputAppScriptApiKey.value.trim();
-    useDemoMode = switchDemoMode.checked;
+  if (formConfig) {
+    formConfig.addEventListener('submit', (e) => {
+      e.preventDefault();
+      appScriptUrl = (inputAppScriptUrl && inputAppScriptUrl.value.trim()) ? inputAppScriptUrl.value.trim() : DEFAULT_APP_SCRIPT_URL;
+      appScriptUser = inputAppScriptUser.value.trim();
+      appScriptApiKey = inputAppScriptApiKey.value.trim();
+      useDemoMode = switchDemoMode.checked;
 
-    localStorage.setItem('uct_app_script_url', appScriptUrl);
-    localStorage.setItem('uct_user', appScriptUser);
-    localStorage.setItem('uct_api_key', appScriptApiKey);
-    localStorage.setItem('uct_demo_mode', useDemoMode ? 'true' : 'false');
+      localStorage.setItem('uct_app_script_url', appScriptUrl);
+      localStorage.setItem('uct_user', appScriptUser);
+      localStorage.setItem('uct_api_key', appScriptApiKey);
+      localStorage.setItem('uct_demo_mode', useDemoMode ? 'true' : 'false');
 
-    updateBannerStatus();
-    if (!useDemoMode) {
+      updateBannerStatus();
+      if (!useDemoMode) {
+        testConnection(true);
+      } else {
+        alert('✅ Configuración de Modo Demostración guardada correctamente.');
+      }
+    });
+  }
+
+  if (btnTestConn) {
+    btnTestConn.addEventListener('click', () => {
+      appScriptUrl = (inputAppScriptUrl && inputAppScriptUrl.value.trim()) ? inputAppScriptUrl.value.trim() : DEFAULT_APP_SCRIPT_URL;
+      appScriptUser = inputAppScriptUser.value.trim();
+      appScriptApiKey = inputAppScriptApiKey.value.trim();
       testConnection(true);
-    } else {
-      alert('✅ Configuración de Modo Demostración guardada correctamente.');
-    }
-  });
-
-  btnTestConn.addEventListener('click', () => {
-    appScriptUrl = inputAppScriptUrl.value.trim();
-    appScriptUser = inputAppScriptUser.value.trim();
-    appScriptApiKey = inputAppScriptApiKey.value.trim();
-    testConnection(true);
-  });
+    });
+  }
 
   async function testConnection(showToast = true) {
-    if (!appScriptUrl || !appScriptUser || !appScriptApiKey) {
-      showTestResult('danger', 'Por favor completa la URL, Usuario y API Key.');
+    if (!appScriptUrl) appScriptUrl = DEFAULT_APP_SCRIPT_URL;
+    if (!appScriptUser || !appScriptApiKey) {
+      showTestResult('danger', 'Por favor ingresa tu Usuario Administrador y tu API Key.');
       return;
     }
 

@@ -236,8 +236,8 @@
             <form id="form-config">
               <div class="mb-3">
                 <label for="appScriptUrl" class="form-label fw-bold">URL de la Aplicación Web de Google Apps Script</label>
-                <input type="url" class="form-control" id="appScriptUrl" placeholder="https://script.google.com/macros/s/AKfycb.../exec" required>
-                <div class="form-text">Pega la URL devuelta por Google Apps Script tras publicar el script como Aplicación Web.</div>
+                <input type="url" class="form-control" id="appScriptUrl" value="https://script.google.com/macros/s/AKfycbzj54Xv54pt7gGvQP-xtv1cb5VotlaxyTs-p_vncMUJjb6KfwZlPRZjLULUNtBqUFTB/exec" placeholder="https://script.google.com/macros/s/AKfycb.../exec" required>
+                <div class="form-text">URL de la aplicación web preconfigurada en el sistema.</div>
               </div>
 
               <div class="row g-3 mb-3">
@@ -928,15 +928,11 @@ function findColumnIndexFlex(headers, keywords) {
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2"></i>Credenciales de Conexión Requeridas</h5>
+          <h5 class="modal-title fw-bold"><i class="bi bi-shield-lock me-2"></i>Credenciales de Acceso Requeridas</h5>
         </div>
         <div class="modal-body p-4">
-          <p class="text-muted small mb-3">Para acceder a las funciones administrativas del sistema, por favor ingresa la <strong>URL de Apps Script</strong>, tu <strong>Usuario</strong> y tu <strong>API Key</strong> asignada.</p>
+          <p class="text-muted small mb-3">Para acceder a las funciones administrativas del sistema, por favor ingresa tu <strong>Usuario Administrador</strong> y tu <strong>API Key / Token de Acceso</strong>.</p>
           <form id="form-modal-credenciales">
-            <div class="mb-3">
-              <label class="form-label fw-bold small">URL de Google Apps Script</label>
-              <input type="url" class="form-control" id="modalInputUrl" placeholder="https://script.google.com/macros/s/.../exec" required>
-            </div>
             <div class="mb-3">
               <label class="form-label fw-bold small">Usuario Administrador</label>
               <input type="text" class="form-control" id="modalInputUser" placeholder="ej. admin" required>
