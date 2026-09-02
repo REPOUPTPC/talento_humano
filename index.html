@@ -513,18 +513,24 @@ function doGet(e) {
     var adminData = adminSheet.getDataRange().getValues();
     
     function authCheck(usr, key) {
-      if (!usr || !key) return null;
+      if (usr === undefined || usr === null || key === undefined || key === null) return null;
       var normUsr = String(usr).trim().toLowerCase();
       var normKey = String(key).trim();
+      if (!normUsr || !normKey) return null;
       
       for (var a = 1; a < adminData.length; a++) {
-        var rowUsr = String(adminData[a][0] || "").trim().toLowerCase();
-        var rowKey = String(adminData[a][1] || "").trim();
+        var rawUsr = adminData[a][0];
+        var rawKey = adminData[a][1];
+        var rowUsr = String(rawUsr !== undefined && rawUsr !== null ? rawUsr : "").trim().toLowerCase();
+        var rowKey = String(rawKey !== undefined && rawKey !== null ? rawKey : "").trim();
+        if (typeof rawKey === 'number') {
+          rowKey = Math.round(rawKey).toString().trim();
+        }
         var rowRol = String(adminData[a][2] || "ADMIN").trim().toUpperCase();
         var rowStatus = String(adminData[a][3] || "ACTIVO").trim().toUpperCase();
         
         if (rowUsr === normUsr && rowKey === normKey && rowStatus === "ACTIVO") {
-          return { usuario: adminData[a][0], rol: rowRol };
+          return { usuario: String(rawUsr), rol: rowRol };
         }
       }
       return null;
@@ -735,10 +741,17 @@ function doPost(e) {
     var authUser = null;
 
     for (var a = 1; a < adminData.length; a++) {
-      if (String(adminData[a][0] || "").trim().toLowerCase() === normUsr &&
-          String(adminData[a][1] || "").trim() === normKey &&
-          String(adminData[a][3] || "ACTIVO").trim().toUpperCase() === "ACTIVO") {
-        authUser = { usuario: adminData[a][0], rol: String(adminData[a][2] || "ADMIN").trim().toUpperCase() };
+      var rawUsr = adminData[a][0];
+      var rawKey = adminData[a][1];
+      var rowUsr = String(rawUsr !== undefined && rawUsr !== null ? rawUsr : "").trim().toLowerCase();
+      var rowKey = String(rawKey !== undefined && rawKey !== null ? rawKey : "").trim();
+      if (typeof rawKey === 'number') {
+        rowKey = Math.round(rawKey).toString().trim();
+      }
+      var rowStatus = String(adminData[a][3] || "ACTIVO").trim().toUpperCase();
+
+      if (rowUsr === normUsr && rowKey === normKey && rowStatus === "ACTIVO") {
+        authUser = { usuario: String(rawUsr), rol: String(adminData[a][2] || "ADMIN").trim().toUpperCase() };
         break;
       }
     }
@@ -759,7 +772,9 @@ function doPost(e) {
         return jsonResponse({ success: false, error: "Usuario y API Key son obligatorios." });
       }
 
-      adminSheet.appendRow([nuevoUsr, nuevoKey, nuevoRol, "ACTIVO"]);
+      adminSheet.appendRow([nuevoUsr, "'" + nuevoKey, nuevoRol, "ACTIVO"]);
+      var lastRow = adminSheet.getLastRow();
+      adminSheet.getRange(lastRow, 2).setNumberFormat("@");
       return jsonResponse({ success: true, message: "Administrador " + nuevoUsr + " registrado exitosamente." });
     }
 
@@ -769,9 +784,11 @@ function doPost(e) {
         return jsonResponse({ success: false, error: "La nueva contraseña no puede estar vacía." });
       }
       for (var a = 1; a < adminData.length; a++) {
-        if (String(adminData[a][0] || "").trim().toLowerCase() === normUsr &&
+        var rUsr = adminData[a][0];
+        if (String(rUsr || "").trim().toLowerCase() === normUsr &&
             String(adminData[a][3] || "ACTIVO").trim().toUpperCase() === "ACTIVO") {
-          adminSheet.getRange(a + 1, 2).setValue(newKey);
+          var range = adminSheet.getRange(a + 1, 2);
+          range.setNumberFormat("@").setValue("'" + newKey);
           return jsonResponse({ success: true, message: "Contraseña actualizada exitosamente." });
         }
       }

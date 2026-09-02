@@ -280,11 +280,12 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       if (cambiarPassError) cambiarPassError.classList.add('d-none');
 
-      const passActual = inputPassActual ? inputPassActual.value.trim() : '';
-      const passNueva = inputPassNueva ? inputPassNueva.value.trim() : '';
-      const passConfirm = inputPassConfirm ? inputPassConfirm.value.trim() : '';
+      const passActual = String(inputPassActual ? inputPassActual.value : '').trim();
+      const passNueva = String(inputPassNueva ? inputPassNueva.value : '').trim();
+      const passConfirm = String(inputPassConfirm ? inputPassConfirm.value : '').trim();
+      const currentKey = String(appScriptApiKey || '').trim();
 
-      if (passActual !== appScriptApiKey) {
+      if (passActual !== currentKey) {
         if (cambiarPassError) {
           cambiarPassError.textContent = 'La contraseña actual ingresada no coincide.';
           cambiarPassError.classList.remove('d-none');
