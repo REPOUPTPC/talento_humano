@@ -332,10 +332,11 @@
                     <th>API Key / Token</th>
                     <th>Rol</th>
                     <th>Estado</th>
+                    <th class="text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="bodyTablaAdmins">
-                  <tr><td colspan="4" class="text-center text-muted py-3">Presione "Probar Conexión" para cargar la lista.</td></tr>
+                  <tr><td colspan="5" class="text-center text-muted py-3">Presione "Probar Conexión" para cargar la lista.</td></tr>
                 </tbody>
               </table>
             </div>
@@ -760,6 +761,12 @@ function doPost(e) {
       return jsonResponse({ status: "error", message: "Acceso no autorizado" });
     }
 
+    function esClaveValidaBackend(pwd) {
+      if (!pwd) return false;
+      var str = String(pwd).trim();
+      return str.length >= 6 && /[a-zA-Z]/.test(str) && /[0-9]/.test(str);
+    }
+
     if (action === 'addAdmin') {
       if (authUser.rol !== 'SUPER_ADMIN') {
         return jsonResponse({ status: "error", message: "Acceso denegado. Se requiere rol SUPER_ADMIN." });
@@ -772,6 +779,10 @@ function doPost(e) {
         return jsonResponse({ success: false, error: "Usuario y API Key son obligatorios." });
       }
 
+      if (!esClaveValidaBackend(nuevoKey)) {
+        return jsonResponse({ success: false, error: "La contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres." });
+      }
+
       adminSheet.appendRow([nuevoUsr, "'" + nuevoKey, nuevoRol, "ACTIVO"]);
       var lastRow = adminSheet.getLastRow();
       adminSheet.getRange(lastRow, 2).setNumberFormat("@");
@@ -780,8 +791,8 @@ function doPost(e) {
 
     if (action === 'changePassword') {
       var newKey = String(contents.new_api_key || "").trim();
-      if (!newKey) {
-        return jsonResponse({ success: false, error: "La nueva contraseña no puede estar vacía." });
+      if (!esClaveValidaBackend(newKey)) {
+        return jsonResponse({ success: false, error: "La nueva contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres." });
       }
       for (var a = 1; a < adminData.length; a++) {
         var rUsr = adminData[a][0];
@@ -793,6 +804,37 @@ function doPost(e) {
         }
       }
       return jsonResponse({ success: false, error: "Usuario no encontrado." });
+    }
+
+    if (action === 'updateAdminPassword') {
+      if (authUser.rol !== 'SUPER_ADMIN') {
+        return jsonResponse({ status: "error", message: "Acceso denegado. Se requiere rol SUPER_ADMIN." });
+      }
+      var targetUsr = String(contents.target_usuario || "").trim().toLowerCase();
+      var newKey = String(contents.new_api_key || "").trim();
+
+      if (!targetUsr || !newKey) {
+        return jsonResponse({ success: false, error: "Usuario y nueva contraseña son obligatorios." });
+      }
+
+      if (!esClaveValidaBackend(newKey)) {
+        return jsonResponse({ success: false, error: "La contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres." });
+      }
+
+      for (var a = 1; a < adminData.length; a++) {
+        var rUsr = String(adminData[a][0] || "").trim().toLowerCase();
+        var rRol = String(adminData[a][2] || "ADMIN").trim().toUpperCase();
+
+        if (rUsr === targetUsr) {
+          if (rRol === 'SUPER_ADMIN') {
+            return jsonResponse({ success: false, error: "Un SUPER_ADMIN no puede cambiar la contraseña de otro SUPER_ADMIN." });
+          }
+          var range = adminSheet.getRange(a + 1, 2);
+          range.setNumberFormat("@").setValue("'" + newKey);
+          return jsonResponse({ success: true, message: "Contraseña del administrador " + adminData[a][0] + " actualizada exitosamente." });
+        }
+      }
+      return jsonResponse({ success: false, error: "Usuario administrador no encontrado." });
     }
 
     if (action === 'updateRow') {
@@ -997,6 +1039,9 @@ function findColumnIndexFlex(headers, keywords) {
               <i class="bi bi-key-fill me-1"></i> Conectar al Sistema
             </button>
           </form>
+          <div class="mt-3 text-center border-top pt-3">
+            <p class="text-muted small mb-0"><i class="bi bi-info-circle-fill me-1 text-primary"></i>¿Olvidaste tu contraseña?<br>Debes solicitar a tu <strong>SUPER_ADMINISTRADOR</strong> el restablecimiento de tu clave.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -1183,6 +1228,41 @@ function findColumnIndexFlex(headers, keywords) {
             <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-dark" id="btnSubmitCambiarPass">
               <span class="spinner-border spinner-border-sm me-1 d-none" id="spinnerCambiarPass"></span>
               <i class="bi bi-check-circle-fill me-1"></i> Guardar Nueva Contraseña
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE EDICIÓN DE ADMIN POR SUPER_ADMIN -->
+  <div class="modal fade" id="modalEditarAdminBySuper" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold"><i class="bi bi-key-fill me-2 text-warning"></i>Asignar Nueva Contraseña</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="formEditarAdminBySuper">
+            <div id="editAdminError" class="alert alert-danger py-2 small d-none"></div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-muted">Usuario Administrador</label>
+              <input type="text" class="form-control bg-light text-dark fw-bold" id="inputEditAdminUser" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold small">Nueva Contraseña / API Key</label>
+              <div class="input-group">
+                <input type="password" class="form-control" id="inputEditAdminKey" required placeholder="ej. Admin123">
+                <button class="btn btn-outline-secondary btn-toggle-password" type="button" data-target="inputEditAdminKey" title="Mostrar/Ocultar contraseña">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="form-text small text-muted">Debe ser alfanumérica (combinar letras y números) y tener mínimo 6 caracteres.</div>
+            </div>
+            <button type="submit" class="btn btn-warning w-100 fw-bold py-2 shadow-sm text-dark" id="btnSubmitEditAdmin">
+              <span class="spinner-border spinner-border-sm me-1 d-none" id="spinnerEditAdmin"></span>
+              <i class="bi bi-check-circle-fill me-1"></i> Actualizar Contraseña
             </button>
           </form>
         </div>

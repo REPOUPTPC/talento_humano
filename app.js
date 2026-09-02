@@ -163,6 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
     modalAlertaBs.show();
   }
 
+  function esPasswordValida(pwd) {
+    if (!pwd) return false;
+    const str = String(pwd).trim();
+    if (str.length < 6) return false;
+    const tieneLetra = /[a-zA-ZáéíóúÁÉÍÓÚñÑ]/.test(str);
+    const tieneNumero = /[0-9]/.test(str);
+    return tieneLetra && tieneNumero;
+  }
+
   function handleAuthFailure(msg) {
     appScriptUser = '';
     appScriptApiKey = '';
@@ -293,9 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (!passNueva) {
+      if (!esPasswordValida(passNueva)) {
         if (cambiarPassError) {
-          cambiarPassError.textContent = 'La nueva contraseña no puede estar vacía.';
+          cambiarPassError.textContent = 'La nueva contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres.';
           cambiarPassError.classList.remove('d-none');
         }
         return;
@@ -597,11 +606,20 @@ document.addEventListener('DOMContentLoaded', () => {
     admins.forEach(ad => {
       const tr = document.createElement('tr');
       const isSuper = ad.rol === 'SUPER_ADMIN';
+
+      let accionTd = '';
+      if (isSuper) {
+        accionTd = `<span class="badge bg-light text-muted border"><i class="bi bi-shield-lock me-1"></i> Protegido</span>`;
+      } else {
+        accionTd = `<button class="btn btn-sm btn-outline-primary fw-bold btn-editar-admin-clave" data-usuario="${escapeHtml(ad.usuario)}"><i class="bi bi-pencil-square me-1"></i> Cambiar Clave</button>`;
+      }
+
       tr.innerHTML = `
         <td class="fw-bold">${escapeHtml(ad.usuario)}</td>
         <td><code>${escapeHtml(ad.api_key)}</code></td>
         <td><span class="badge ${isSuper ? 'bg-primary' : 'bg-secondary'}">${escapeHtml(ad.rol)}</span></td>
         <td><span class="badge bg-success-subtle text-success border border-success">${escapeHtml(ad.status || 'ACTIVO')}</span></td>
+        <td class="text-center">${accionTd}</td>
       `;
       bodyTablaAdmins.appendChild(tr);
     });
@@ -615,6 +633,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const newRol = document.getElementById('newAdminRol').value;
 
       if (!newUsr || !newKey) return;
+
+      if (!esPasswordValida(newKey)) {
+        showModalAlert('❌ La contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres.', 'danger');
+        return;
+      }
 
       const btnCrear = document.getElementById('btnCrearAdmin');
       btnCrear.disabled = true;
@@ -651,6 +674,103 @@ document.addEventListener('DOMContentLoaded', () => {
         showModalAlert('❌ Error de red al agregar administrador: ' + err.message, 'danger');
       } finally {
         btnCrear.disabled = false;
+      }
+    });
+  }
+
+  // --- MODAL DE EDICIÓN DE CLAVE DE ADMIN POR SUPER_ADMIN ---
+  const modalEditarAdminEl = document.getElementById('modalEditarAdminBySuper');
+  const modalEditarAdminBs = modalEditarAdminEl ? new bootstrap.Modal(modalEditarAdminEl) : null;
+  const formEditarAdminBySuper = document.getElementById('formEditarAdminBySuper');
+  const inputEditAdminUser = document.getElementById('inputEditAdminUser');
+  const inputEditAdminKey = document.getElementById('inputEditAdminKey');
+  const editAdminError = document.getElementById('editAdminError');
+  const btnSubmitEditAdmin = document.getElementById('btnSubmitEditAdmin');
+  const spinnerEditAdmin = document.getElementById('spinnerEditAdmin');
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-editar-admin-clave');
+    if (!btn) return;
+    const targetUser = btn.getAttribute('data-usuario');
+    if (!targetUser) return;
+
+    if (inputEditAdminUser) inputEditAdminUser.value = targetUser;
+    if (inputEditAdminKey) inputEditAdminKey.value = '';
+    if (editAdminError) editAdminError.classList.add('d-none');
+    if (modalEditarAdminBs) modalEditarAdminBs.show();
+  });
+
+  if (formEditarAdminBySuper) {
+    formEditarAdminBySuper.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (editAdminError) editAdminError.classList.add('d-none');
+
+      const targetUsr = inputEditAdminUser ? inputEditAdminUser.value.trim() : '';
+      const newKey = inputEditAdminKey ? inputEditAdminKey.value.trim() : '';
+
+      if (!esPasswordValida(newKey)) {
+        if (editAdminError) {
+          editAdminError.textContent = 'La nueva contraseña debe ser alfanumérica (combinar letras y números) y tener como mínimo 6 caracteres.';
+          editAdminError.classList.remove('d-none');
+        }
+        return;
+      }
+
+      if (btnSubmitEditAdmin) btnSubmitEditAdmin.disabled = true;
+      if (spinnerEditAdmin) spinnerEditAdmin.classList.remove('d-none');
+
+      try {
+        if (useDemoMode || !appScriptUrl) {
+          const targetObj = demoAdmins.find(a => a.usuario.toLowerCase() === targetUsr.toLowerCase());
+          if (targetObj) {
+            if (targetObj.rol === 'SUPER_ADMIN') {
+              throw new Error('Un SUPER_ADMIN no puede cambiar la clave de otro SUPER_ADMIN.');
+            }
+            targetObj.api_key = newKey;
+            renderTablaAdmins(demoAdmins);
+            if (modalEditarAdminBs) modalEditarAdminBs.hide();
+            showModalAlert(`✅ Contraseña del usuario ${targetUsr} actualizada exitosamente (Modo Demostración).`, 'success');
+          } else {
+            throw new Error('Usuario no encontrado.');
+          }
+        } else {
+          const res = await fetch(appScriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'updateAdminPassword',
+              usuario: appScriptUser,
+              api_key: appScriptApiKey,
+              target_usuario: targetUsr,
+              new_api_key: newKey
+            })
+          });
+
+          const json = await res.json();
+          if (json.success) {
+            if (modalEditarAdminBs) modalEditarAdminBs.hide();
+            showModalAlert(json.message || `✅ Contraseña de ${targetUsr} actualizada.`, 'success');
+            cargarListaAdmins();
+          } else {
+            if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
+              if (modalEditarAdminBs) modalEditarAdminBs.hide();
+              handleAuthFailure(json.message);
+            } else {
+              if (editAdminError) {
+                editAdminError.textContent = json.error || json.message;
+                editAdminError.classList.remove('d-none');
+              }
+            }
+          }
+        }
+      } catch (err) {
+        if (editAdminError) {
+          editAdminError.textContent = err.message;
+          editAdminError.classList.remove('d-none');
+        }
+      } finally {
+        if (btnSubmitEditAdmin) btnSubmitEditAdmin.disabled = false;
+        if (spinnerEditAdmin) spinnerEditAdmin.classList.add('d-none');
       }
     });
   }
