@@ -962,7 +962,8 @@ function formatDateDDMMAAAA(val) {
   if (isoMatch) {
     return isoMatch[3].padStart(2, '0') + '/' + isoMatch[2].padStart(2, '0') + '/' + isoMatch[1];
   }
-  var parts = str.split(/[\/\-\.\sT]/)[0].split(/[\/\-\.]/);
+  var parts = str.split(/[\sT]/)[0].split(/[\/\-\.]/);
+
   if (parts.length === 3) {
     if (parts[0].length === 4) {
       return parts[2].padStart(2, '0') + '/' + parts[1].padStart(2, '0') + '/' + parts[0];

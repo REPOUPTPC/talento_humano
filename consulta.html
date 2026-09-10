@@ -171,7 +171,8 @@
                 return `${day}/${month}/${year}`;
             }
 
-            const parts = s.split(/[\/\-\.\sT]/)[0].split(/[\/\-\.]/);
+            const parts = s.split(/[\sT]/)[0].split(/[\/\-\.]/);
+
             if (parts.length === 3) {
                 if (parts[2].length === 4) {
                     let day = parts[0].padStart(2, '0');
@@ -629,9 +630,10 @@
                     }
                 };
 
+                // Timeout de 10 segundos para dar tiempo a GitHub Pages
                 const timer = setTimeout(() => {
                     finish(crearPngFallback(tipo));
-                }, 2000);
+                }, 10000);
 
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
@@ -652,7 +654,7 @@
                     clearTimeout(timer);
                     finish(crearPngFallback(tipo));
                 };
-                img.src = url + (url.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                img.src = url;
             });
         }
 
@@ -741,7 +743,7 @@
 
                 const textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, presta servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, desde el ${desdePDF}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
 
-                const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionStr} ${NumeroALetrasFecha(fechaEmision.getDate())} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadStr} ${fechaCaducidadLetras}.`;
+                const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
 
                 const qrText = `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
                 const qrCacheKey = 'qr_' + codigo;
