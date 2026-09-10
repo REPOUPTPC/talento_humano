@@ -945,16 +945,36 @@ function logConsulta(ss, usuario, consultado, e) {
 function formatDateDDMMAAAA(val) {
   if (val === null || val === undefined || val === '') return '';
   if (val instanceof Date) {
-    var year = val.getUTCFullYear();
-    var month = String(val.getUTCMonth() + 1).padStart(2, '0');
-    var day = String(val.getUTCDate()).padStart(2, '0');
-    return day + '/' + month + '/' + year;
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var tz = ss ? ss.getSpreadsheetTimeZone() : "GMT";
+      return Utilities.formatDate(val, tz, "dd/MM/yyyy");
+    } catch(e) {
+      var year = val.getFullYear();
+      var month = String(val.getMonth() + 1).padStart(2, '0');
+      var day = String(val.getDate()).padStart(2, '0');
+      return day + '/' + month + '/' + year;
+    }
   }
   var str = String(val).trim();
   if (!str) return '';
   var isoMatch = str.match(/^(\d{4})[\-\/](\d{1,2})[\-\/](\d{1,2})/);
   if (isoMatch) {
     return isoMatch[3].padStart(2, '0') + '/' + isoMatch[2].padStart(2, '0') + '/' + isoMatch[1];
+  }
+  var parts = str.split(/[\/\-\.\sT]/)[0].split(/[\/\-\.]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return parts[2].padStart(2, '0') + '/' + parts[1].padStart(2, '0') + '/' + parts[0];
+    } else if (parts[2].length === 4) {
+      var d = parts[0].padStart(2, '0');
+      var m = parts[1].padStart(2, '0');
+      var y = parts[2];
+      if (parseInt(m, 10) > 12 && parseInt(d, 10) <= 12) {
+        var tmp = d; d = m; m = tmp;
+      }
+      return d + '/' + m + '/' + y;
+    }
   }
   return str;
 }

@@ -154,9 +154,9 @@
             if (val === null || val === undefined || val === '') return '';
             
             if (val instanceof Date) {
-                const d = String(val.getUTCDate()).padStart(2, '0');
-                const m = String(val.getUTCMonth() + 1).padStart(2, '0');
-                const y = val.getUTCFullYear();
+                const d = String(val.getDate()).padStart(2, '0');
+                const m = String(val.getMonth() + 1).padStart(2, '0');
+                const y = val.getFullYear();
                 return `${d}/${m}/${y}`;
             }
 
@@ -177,7 +177,7 @@
                     let day = parts[0].padStart(2, '0');
                     let month = parts[1].padStart(2, '0');
                     let year = parts[2];
-                    if (parseInt(month, 10) > 12) {
+                    if (parseInt(month, 10) > 12 && parseInt(day, 10) <= 12) {
                         const tmp = day; day = month; month = tmp;
                     }
                     return `${day}/${month}/${year}`;
@@ -191,9 +191,9 @@
 
             const parsed = new Date(s);
             if (!isNaN(parsed.getTime())) {
-                const day = String(parsed.getUTCDate()).padStart(2, '0');
-                const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
-                const year = parsed.getUTCFullYear();
+                const day = String(parsed.getDate()).padStart(2, '0');
+                const month = String(parsed.getMonth() + 1).padStart(2, '0');
+                const year = parsed.getFullYear();
                 return `${day}/${month}/${year}`;
             }
 
@@ -219,14 +219,21 @@
             }
             const parts = s.split(/[\/\-\.]/).map(Number);
             if (parts.length === 3) {
-                if (parts[0] > 12) {
-                    return new Date(parts[2], parts[1] - 1, parts[0]);
+                if (parts[0] > 1000) {
+                    return new Date(parts[0], parts[1] - 1, parts[2]);
                 }
                 if (parts[2] > 1000) {
-                    return new Date(parts[2], parts[0] - 1, parts[1]);
+                    let d = parts[0];
+                    let m = parts[1];
+                    let y = parts[2];
+                    if (m > 12 && d <= 12) {
+                        const tmp = d; d = m; m = tmp;
+                    }
+                    return new Date(y, m - 1, d);
                 }
             }
-            return new Date(s);
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? null : d;
         }
 
         // --- Lógica de conversión de números a letras ---

@@ -1378,7 +1378,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dateStr.includes('-')) {
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), tParts[0], tParts[1], tParts[2]);
+        if (parts[0].length === 4) {
+          return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), tParts[0], tParts[1], tParts[2]);
+        } else {
+          let d = parseInt(parts[0], 10);
+          let m = parseInt(parts[1], 10);
+          let y = parseInt(parts[2], 10);
+          if (m > 12 && d <= 12) {
+            const tmp = d; d = m; m = tmp;
+          }
+          return new Date(y, m - 1, d, tParts[0], tParts[1], tParts[2]);
+        }
       }
     }
     const d = new Date(str);
@@ -1981,9 +1991,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (val === null || val === undefined || val === '') return '';
     
     if (val instanceof Date) {
-      const d = String(val.getUTCDate()).padStart(2, '0');
-      const m = String(val.getUTCMonth() + 1).padStart(2, '0');
-      const y = val.getUTCFullYear();
+      const d = String(val.getDate()).padStart(2, '0');
+      const m = String(val.getMonth() + 1).padStart(2, '0');
+      const y = val.getFullYear();
       return `${d}/${m}/${y}`;
     }
 
@@ -2005,7 +2015,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let day = parts[0].padStart(2, '0');
         let month = parts[1].padStart(2, '0');
         let year = parts[2];
-        if (parseInt(month, 10) > 12) {
+        if (parseInt(month, 10) > 12 && parseInt(day, 10) <= 12) {
           const tmp = day; day = month; month = tmp;
         }
         return `${day}/${month}/${year}`;
@@ -2019,9 +2029,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const parsed = new Date(s);
     if (!isNaN(parsed.getTime())) {
-      const day = String(parsed.getUTCDate()).padStart(2, '0');
-      const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
-      const year = parsed.getUTCFullYear();
+      const day = String(parsed.getDate()).padStart(2, '0');
+      const month = String(parsed.getMonth() + 1).padStart(2, '0');
+      const year = parsed.getFullYear();
       return `${day}/${month}/${year}`;
     }
 
