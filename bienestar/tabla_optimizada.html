@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cobertura y Límites Contratados</title>
+  <style>
+    /* Reset y ajuste de márgenes */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: transparent;
+      color: #334155;
+      padding: 4px;
+    }
+
+    .table-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    /* Título / Caption */
+    .table-title {
+      background-color: #ffffff;
+      color: #0b3c68;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 10px 8px 10px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    thead th {
+      background-color: #eaf4fd;
+      color: #072a4a;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 8px 12px;
+      border-bottom: 2px solid #b9ddfb;
+    }
+
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #edf2f7;
+      line-height: 1.35;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Estilos de datos */
+    .col-service {
+      font-weight: 600;
+      color: #0f4c81;
+    }
+
+    .col-limit {
+      text-align: center;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    .col-obs {
+      color: #475569;
+    }
+
+    .tag-included {
+      color: #0284c7;
+      font-weight: 700;
+    }
+
+    /* VISTA MÓVIL (Compacta en formato tarjeta para pantallas pequeñas) */
+    @media (max-width: 580px) {
+      thead {
+        display: none;
+      }
+
+      tr {
+        display: flex;
+        flex-direction: column;
+        padding: 8px 10px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      td {
+        padding: 2px 0 !important;
+        border: none !important;
+      }
+
+      /* Fila 1: Nombre del servicio */
+      td:nth-child(1) {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #0b3c68;
+      }
+
+      /* Fila 2: Límite con prefijo */
+      td:nth-child(2) {
+        text-align: left !important;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #0f4c81;
+      }
+
+      td:nth-child(2)::before {
+        content: "Límite: ";
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      /* Fila 3: Observaciones */
+      td:nth-child(3) {
+        font-size: 0.73rem;
+        color: #64748b;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="table-container">
+    <div class="table-title">Cobertura y Límites Contratados por Grupo Familiar (2026)</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="text-align: left;">Servicio / Especialidad</th>
+          <th style="text-align: center; width: 120px;">Límite Contratado</th>
+          <th style="text-align: left;">Observaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-service">Hospitalización y Cirugía</td>
+          <td class="col-limit">5.000</td>
+          <td class="col-obs">Cobertura grupal</td>
+        </tr>
+        <tr>
+          <td class="col-service">Maternidad</td>
+          <td class="col-limit">2.500</td>
+          <td class="col-obs">Cobertura grupal</td>
+        </tr>
+        <tr>
+          <td class="col-service">Atención Primaria de Salud</td>
+          <td class="col-limit">1.000</td>
+          <td class="col-obs">Red de clínicas y centros afiliados</td>
+        </tr>
+        <tr>
+          <td class="col-service">Asistencia Médica Domiciliaria</td>
+          <td class="col-limit">1.000</td>
+          <td class="col-obs">Atención programada o de urgencia</td>
+        </tr>
+        <tr>
+          <td class="col-service">Odontología</td>
+          <td class="col-limit">200</td>
+          <td class="col-obs">Tratamientos básicos y preventivos</td>
+        </tr>
+        <tr>
+          <td class="col-service">Oftalmología</td>
+          <td class="col-limit">200</td>
+          <td class="col-obs">Consulta y diagnóstico</td>
+        </tr>
+        <tr>
+          <td class="col-service">Ginecología</td>
+          <td class="col-limit">200</td>
+          <td class="col-obs">Aplica exclusivamente a titular y cónyuge</td>
+        </tr>
+        <tr>
+          <td class="col-service">Urología</td>
+          <td class="col-limit">1.000</td>
+          <td class="col-obs">Aplica exclusivamente a titular y cónyuge</td>
+        </tr>
+        <tr>
+          <td class="col-service">Servicio Funerario</td>
+          <td class="col-limit tag-included">Incluido</td>
+          <td class="col-obs">Cobertura integral según convenio</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Script para la comunicación con Google Sites -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.2/iframeResizer.contentWindow.min.js"></script>
+</body>
+</html>
