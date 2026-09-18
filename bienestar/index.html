@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Bienestar Social | UPTPC</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            uptpc: {
+              dark: '#051329',
+              navy: '#0b2545',
+              blue: '#134074',
+              accent: '#2563eb',
+              sky: '#38bdf8',
+              gold: '#d97706',
+              goldLight: '#fef3c7',
+              ice: '#f0f7ff',
+              cardBg: '#ffffff',
+            }
+          },
+          boxShadow: {
+            'glass': '0 8px 32px 0 rgba(11, 37, 69, 0.12)',
+            'card-hover': '0 20px 35px -10px rgba(19, 64, 116, 0.18)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    
+    .gradient-hero {
+      background: linear-gradient(135deg, #051329 0%, #0b2545 50%, #134074 100%);
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    
+    .glass-nav {
+      background: rgba(5, 19, 41, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .badge-glow {
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.35);
+    }
+
+    /* Modern Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Card animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 selection:bg-blue-600 selection:text-white">
+
+  <!-- ================= BANNER / HEADER INSTITUCIONAL ================= -->
+  <header class="gradient-hero text-white relative overflow-hidden shadow-xl border-b border-blue-900/40">
+    <!-- Overlay decorativo de fondo -->
+    <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:16px_16px]"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-12 relative z-10">
+      
+      <!-- Barra Superior de Logos Institucionales -->
+      <div class="flex flex-wrap items-center justify-between gap-6 pb-8 border-b border-blue-800/40">
+        
+        <!-- Logo Bienestar Social -->
+        <div class="flex items-center gap-3 bg-white/10 hover:bg-white/15 transition-colors p-2.5 rounded-xl backdrop-blur-md border border-white/10 shadow-sm">
+          <img src="../img/bs.png" alt="Bienestar Social" class="h-12 w-auto object-contain drop-shadow-md">
+          <div class="hidden sm:block">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-200">Dirección de</h4>
+            <p class="text-sm font-extrabold text-white leading-tight">Bienestar Social</p>
+          </div>
+        </div>
+
+        <!-- Logos Centrales / Aliados -->
+        <div class="flex items-center gap-4 sm:gap-6 ml-auto sm:ml-0">
+          <!-- Logo Talento Humano -->
+          <div class="flex items-center gap-2.5 bg-white/10 hover:bg-white/15 transition-colors px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 shadow-sm">
+            <img src="../img/th.png" alt="Talento Humano" class="h-10 sm:h-11 w-auto object-contain drop-shadow-md">
+            <div class="text-left hidden lg:block">
+              <span class="block text-[10px] uppercase tracking-wider text-blue-200 font-semibold">Gestión de</span>
+              <span class="text-xs font-bold text-white">Talento Humano</span>
+            </div>
+          </div>
+
+          <!-- Logo Ciencia y Tecnología -->
+          <div class="flex items-center gap-2.5 bg-white/10 hover:bg-white/15 transition-colors px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 shadow-sm">
+            <img src="../img/cyt.png" alt="Unidad de Ciencia y Tecnología" class="h-10 sm:h-11 w-auto object-contain drop-shadow-md">
+            <div class="text-left hidden lg:block">
+              <span class="block text-[10px] uppercase tracking-wider text-blue-200 font-semibold">Unidad de</span>
+              <span class="text-xs font-bold text-white">Ciencia y Tecnología</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hero Title & Info -->
+      <div class="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-8">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-semibold mb-4 border border-sky-400/30 badge-glow">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+            Portal Oficial de Servicios & Cobertura Médica
+          </div>
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-display tracking-tight text-white leading-tight">
+            Bienestar Social <span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-amber-300">UPTPC</span>
+          </h1>
+          <p class="mt-3 text-slate-300 text-base sm:text-lg max-w-2xl font-normal leading-relaxed">
+            Plataforma centralizada de gestión de proveedores, tabla de coberturas de salud, seguros y documentos oficiales para el personal docente, administrativo y obrero.
+          </p>
+        </div>
+
+        <!-- Tarjetas de Acceso Rápido / Stats en Hero -->
+        <div class="lg:col-span-4 grid grid-cols-2 gap-4">
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-center">
+            <i class="fa-solid fa-user-doctor text-2xl text-sky-400 mb-2"></i>
+            <h3 class="text-2xl font-bold text-white" id="stat-proveedores">150+</h3>
+            <p class="text-xs text-slate-300 font-medium">Proveedores Médicos</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-center">
+            <i class="fa-solid fa-shield-halved text-2xl text-amber-400 mb-2"></i>
+            <h3 class="text-2xl font-bold text-white">2026</h3>
+            <p class="text-xs text-slate-300 font-medium">Cobertura Vigente</p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 text-center col-span-2">
+            <div class="flex items-center justify-center gap-2 text-xs text-sky-200 font-medium">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Detección Automática de Módulos Activa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= BARRA DE BÚSQUEDA Y FILTROS ================= -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20 w-full">
+    <div class="glass-effect rounded-2xl p-4 sm:p-5 shadow-glass flex flex-col md:flex-row items-center justify-between gap-4 border border-white/80">
+      
+      <!-- Buscador -->
+      <div class="relative w-full md:w-96">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Buscar documentos o módulos..." 
+          class="w-full pl-11 pr-4 py-2.5 bg-slate-100/90 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition-all text-slate-700 font-medium"
+          oninput="filtrarDocumentos()"
+        >
+      </div>
+
+      <!-- Filtros / Estadísticas rápidas -->
+      <div class="flex items-center justify-between w-full md:w-auto gap-4">
+        <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600">
+          <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+          <span id="found-count">Cargando módulos...</span>
+        </div>
+
+        <div class="flex items-center gap-2 border-l border-slate-300 pl-4">
+          <button 
+            onclick="setVista('grid')" 
+            id="btn-vista-grid" 
+            class="p-2 rounded-lg bg-blue-600 text-white transition-colors text-sm shadow-sm"
+            title="Vista de cuadrícula"
+          >
+            <i class="fa-solid fa-border-all"></i>
+          </button>
+          <button 
+            onclick="setVista('list')" 
+            id="btn-vista-list" 
+            class="p-2 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors text-sm"
+            title="Vista de lista"
+          >
+            <i class="fa-solid fa-list"></i>
+          </button>
+          <button 
+            onclick="inspeccionarDirectorio()" 
+            class="p-2 rounded-lg bg-slate-100 hover:bg-blue-50 text-blue-700 transition-colors text-sm font-medium flex items-center gap-1.5 border border-slate-200"
+            title="Refrescar y recargar directorio"
+          >
+            <i class="fa-solid fa-rotate text-xs"></i>
+            <span class="hidden sm:inline text-xs">Recargar</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= SECCIÓN DESTACADA: MÓDULOS PRINCIPALES ================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full">
+    
+    <!-- Encabezado de Sección Principal -->
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-bold font-display text-slate-800 flex items-center gap-3">
+          <i class="fa-solid fa-folder-open text-blue-600"></i>
+          Módulos y Documentos Disponibles
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+          Visualización y acceso directo a todos los archivos HTML publicados en <code class="bg-slate-200 px-1.5 py-0.5 rounded text-blue-800 text-xs font-mono">/bienestar</code>
+        </p>
+      </div>
+    </div>
+
+    <!-- MÓDULOS EN DESTACADO (PROVEEDORES Y COBERTURAS) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+      
+      <!-- Tarjeta Destacada 1: Directorio de Proveedores Médicos -->
+      <div class="bg-white rounded-2xl p-6 shadow-md hover:shadow-card-hover transition-all duration-300 border border-blue-100 relative group overflow-hidden flex flex-col justify-between">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-star text-amber-500"></i> Módulo Principal
+            </span>
+            <span class="text-xs text-slate-400 font-mono">directorio_proveedores.html</span>
+          </div>
+
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-14 h-14 rounded-xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-md shadow-blue-500/20 shrink-0">
+              <i class="fa-solid fa-hospital-user"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+                Red de Proveedores Médicos
+              </h3>
+              <p class="text-slate-600 text-sm mt-1 leading-relaxed">
+                Directorio interactivo completo con clínicas afiliadas, médicos especialistas, laboratorios, farmacias y servicios de emergencia con búsqueda avanzada y filtros por estado y especialidad.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-stethoscope text-blue-500 mr-1"></i>Especialidades</span>
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-pills text-emerald-500 mr-1"></i>Farmacias</span>
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-file-pdf text-rose-500 mr-1"></i>Exportación PDF</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+          <a 
+            href="directorio_proveedores.html" 
+            class="flex-1 text-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2"
+          >
+            <span>Abrir Directorio</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+          <button 
+            onclick="abrirModal('directorio_proveedores.html', 'Red de Proveedores Médicos')"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-semibold text-sm rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-1.5"
+            title="Vista previa rápida"
+          >
+            <i class="fa-solid fa-eye"></i>
+            <span class="hidden sm:inline">Vista Previa</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tarjeta Destacada 2: Tabla Optimizada de Coberturas -->
+      <div class="bg-white rounded-2xl p-6 shadow-md hover:shadow-card-hover transition-all duration-300 border border-amber-100 relative group overflow-hidden flex flex-col justify-between">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-cat text-amber-600"></i> Tabla de Coberturas
+            </span>
+            <span class="text-xs text-slate-400 font-mono">tabla_optimizada.html</span>
+          </div>
+
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center text-2xl shadow-md shadow-amber-500/20 shrink-0">
+              <i class="fa-solid fa-table-list"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-slate-800 group-hover:text-amber-600 transition-colors">
+                Cobertura y Límites Contratados (2026)
+              </h3>
+              <p class="text-slate-600 text-sm mt-1 leading-relaxed">
+                Tabla detallada con los montos máximos, límites de atención médica por grupo familiar, hospitalización, cirugía, maternidad y atención primaria de salud.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-6">
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-house-medical text-amber-500 mr-1"></i>Hospitalización</span>
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-baby text-indigo-500 mr-1"></i>Maternidad</span>
+            <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"><i class="fa-solid fa-truck-medical text-rose-500 mr-1"></i>Ambulancia</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+          <a 
+            href="tabla_optimizada.html" 
+            class="flex-1 text-center py-2.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-amber-600/20 flex items-center justify-center gap-2"
+          >
+            <span>Ver Coberturas</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+          <button 
+            onclick="abrirModal('tabla_optimizada.html', 'Cobertura y Límites Contratados 2026')"
+            class="py-2.5 px-4 bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-semibold text-sm rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-1.5"
+            title="Vista previa rápida"
+          >
+            <i class="fa-solid fa-eye"></i>
+            <span class="hidden sm:inline">Vista Previa</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- CONTENEDOR DINÁMICO DE TODOS LOS ARCHIVOS DETECTADOS -->
+    <div class="mb-4">
+      <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <i class="fa-solid fa-robot text-sky-500"></i>
+        Catálogo Dinámico de Archivos Detectados
+      </h3>
+      <p class="text-xs text-slate-500">Cualquier nuevo archivo <code class="text-blue-600">.html</code> agregado en <code class="text-blue-600">/bienestar</code> se mostrará automáticamente aquí abajo.</p>
+    </div>
+
+    <!-- Grid / List Container -->
+    <div id="dynamic-files-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Los archivos renderizados por JS aparecerán aquí -->
+    </div>
+
+    <!-- Estado Vacío o Busqueda Sin Resultados -->
+    <div id="no-results-state" class="hidden bg-white rounded-2xl p-12 text-center border border-slate-200 my-6">
+      <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+        <i class="fa-solid fa-folder-open"></i>
+      </div>
+      <h4 class="text-lg font-bold text-slate-700">No se encontraron documentos</h4>
+      <p class="text-slate-500 text-sm mt-1">Prueba cambiando los términos de búsqueda o recargando la lista.</p>
+      <button onclick="document.getElementById('search-input').value=''; filtrarDocumentos();" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors">
+        Limpiar Filtro
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ================= PIE DE PÁGINA INSTITUCIONAL ================= -->
+  <footer class="bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        
+        <!-- Identificación Institucional -->
+        <div class="flex items-center gap-4 text-center md:text-left">
+          <div class="flex gap-2">
+            <img src="../img/bs.png" alt="BS" class="h-8 w-auto opacity-80">
+            <img src="../img/th.png" alt="TH" class="h-8 w-auto opacity-80">
+            <img src="../img/cyt.png" alt="CYT" class="h-8 w-auto opacity-80">
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-white">Universidad Politécnica Territorial Paria Cruz (UPTPC)</h4>
+            <p class="text-xs text-slate-400">Dirección de Bienestar Social & Coordinación de Talento Humano</p>
+          </div>
+        </div>
+
+        <!-- Links rápidos & copyright -->
+        <div class="text-center md:text-right">
+          <p class="text-xs text-slate-500">
+            &copy; 2026 UPTPC. Todos los derechos reservados.
+          </p>
+          <p class="text-[11px] text-slate-600 mt-1">
+            Desarrollado en colaboración con la Unidad de Ciencia y Tecnología.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= MODAL PREVISUALIZADOR DE DOCUMENTOS ================= -->
+  <div id="preview-modal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden border border-slate-200 animate-fade-in">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white p-4 px-6 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm">
+            <i class="fa-solid fa-file-code"></i>
+          </div>
+          <div>
+            <h3 id="modal-title" class="font-bold text-base text-white truncate max-w-md">Vista Previa</h3>
+            <span id="modal-filename" class="text-xs text-sky-400 font-mono">documento.html</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a 
+            id="modal-external-link" 
+            href="#" 
+            target="_blank" 
+            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+            title="Abrir en pestaña completa"
+          >
+            <i class="fa-solid fa-up-right-from-square"></i>
+            <span class="hidden sm:inline">Pestaña Nueva</span>
+          </a>
+          <button 
+            onclick="imprimirIframe()" 
+            class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5"
+            title="Imprimir documento"
+          >
+            <i class="fa-solid fa-print"></i>
+            <span class="hidden sm:inline">Imprimir</span>
+          </button>
+          <button 
+            onclick="cerrarModal()" 
+            class="w-8 h-8 rounded-lg bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white transition-colors flex items-center justify-center ml-2"
+            title="Cerrar modal"
+          >
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Iframe) -->
+      <div class="flex-1 bg-slate-100 relative">
+        <div id="modal-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-sm font-semibold text-slate-600">Cargando documento...</span>
+          </div>
+        </div>
+        <iframe id="modal-iframe" class="w-full h-full border-none" onload="document.getElementById('modal-loading').classList.add('hidden')"></iframe>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= LÓGICA DE ESCANEO Y AUTOMATIZACIÓN (JS) ================= -->
+  <script>
+    // Registro de archivos conocidos por defecto en /bienestar
+    const archivosRegistrados = [
+      {
+        filename: 'directorio_proveedores.html',
+        titulo: 'Red de Proveedores Médicos - Bienestar Social',
+        descripcion: 'Directorio médico interactivo con clínicas, emergencias, especialistas, farmacias y laboratorios.',
+        categoria: 'Directorio Médico',
+        icono: 'fa-hospital-user',
+        badgeColor: 'bg-blue-100 text-blue-800 border-blue-200',
+        iconoColor: 'bg-blue-600 text-white',
+        destacado: true
+      },
+      {
+        filename: 'tabla_optimizada.html',
+        titulo: 'Cobertura y Límites Contratados (2026)',
+        descripcion: 'Detalle de montos máximos, coberturas por especialidad y grupo familiar del HCM.',
+        categoria: 'Coberturas Salud',
+        icono: 'fa-table-list',
+        badgeColor: 'bg-amber-100 text-amber-800 border-amber-200',
+        iconoColor: 'bg-amber-600 text-white',
+        destacado: true
+      }
+    ];
+
+    let todosLosArchivos = [...archivosRegistrados];
+    let vistaActual = 'grid';
+
+    // Función principal para detectar automáticamente nuevos archivos HTML
+    async function inspeccionarDirectorio() {
+      try {
+        const response = await fetch('./', { cache: 'no-cache' });
+        if (response.ok) {
+          const htmlText = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlText, 'text/html');
+          const links = Array.from(doc.querySelectorAll('a'));
+          
+          const encontrados = links
+            .map(a => a.getAttribute('href'))
+            .filter(href => href && href.endsWith('.html') && href !== 'index.html' && !href.startsWith('http'));
+
+          for (const filename of encontrados) {
+            const nombreLimpio = filename.replace('./', '');
+            if (!todosLosArchivos.some(a => a.filename === nombreLimpio)) {
+              // Obtener el título real del archivo HTML
+              const infoExtraida = await obtenerInfoHtml(nombreLimpio);
+              todosLosArchivos.push({
+                filename: nombreLimpio,
+                titulo: infoExtraida.titulo || nombreLimpio,
+                descripcion: infoExtraida.descripcion || 'Documento HTML adicionado al directorio de Bienestar Social.',
+                categoria: infoExtraida.categoria || 'Módulo Adicional',
+                icono: infoExtraida.icono || 'fa-file-lines',
+                badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                iconoColor: 'bg-emerald-600 text-white',
+                destacado: false
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.log("Servidor no devuelve indexación directa de directorio, usando catálogo registrado.", err);
+      }
+
+      renderizarArchivos(todosLosArchivos);
+    }
+
+    // Extraer <title> de un archivo HTML mediante fetch
+    async function obtenerInfoHtml(filename) {
+      try {
+        const res = await fetch(filename);
+        if (res.ok) {
+          const text = await res.text();
+          const titleMatch = text.match(/<title[^>]*>(.*?)<\/title>/i);
+          const metaDescMatch = text.match(/<meta[^>]*name=["']description["'][^>]*content=["'](.*?)["']/i);
+          return {
+            titulo: titleMatch ? titleMatch[1].trim() : filename,
+            descripcion: metaDescMatch ? metaDescMatch[1].trim() : null,
+            categoria: 'Documento HTML',
+            icono: 'fa-file-code'
+          };
+        }
+      } catch (e) {
+        console.warn(`No se pudo leer metadatos de ${filename}`, e);
+      }
+      return { titulo: filename, categoria: 'Documento' };
+    }
+
+    // Renderizar tarjetas de archivos
+    function renderizarArchivos(lista) {
+      const container = document.getElementById('dynamic-files-container');
+      const countEl = document.getElementById('found-count');
+      const emptyState = document.getElementById('no-results-state');
+
+      countEl.textContent = `${lista.length} ${lista.length === 1 ? 'módulo' : 'módulos'} ${lista.length === 1 ? 'disponible' : 'disponibles'}`;
+
+      if (lista.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      if (vistaActual === 'grid') {
+        container.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6";
+        container.innerHTML = lista.map((file, idx) => `
+          <div class="bg-white rounded-2xl p-5 shadow-sm hover:shadow-card-hover transition-all duration-300 border border-slate-200/80 flex flex-col justify-between group animate-fade-in" style="animation-delay: ${idx * 60}ms">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border ${file.badgeColor}">
+                  ${file.categoria}
+                </span>
+                <span class="text-[11px] text-slate-400 font-mono truncate max-w-[130px]" title="${file.filename}">${file.filename}</span>
+              </div>
+
+              <div class="flex items-start gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl ${file.iconoColor} flex items-center justify-center text-lg shadow-sm shrink-0">
+                  <i class="fa-solid ${file.icono}"></i>
+                </div>
+                <h4 class="font-bold text-slate-800 text-base leading-snug group-hover:text-blue-600 transition-colors">
+                  ${file.titulo}
+                </h4>
+              </div>
+
+              <p class="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">
+                ${file.descripcion}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2 pt-3 border-t border-slate-100">
+              <a 
+                href="${file.filename}" 
+                class="flex-1 py-2 px-3 bg-slate-900 hover:bg-blue-600 text-white font-medium text-xs rounded-xl transition-colors text-center flex items-center justify-center gap-1.5"
+              >
+                <span>Ver Documento</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+              </a>
+              <button 
+                onclick="abrirModal('${file.filename}', '${escapeJsStr(file.titulo)}')" 
+                class="py-2 px-3 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-medium text-xs rounded-xl transition-colors border border-slate-200"
+                title="Vista previa modal"
+              >
+                <i class="fa-solid fa-eye"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        container.className = "flex flex-col gap-3";
+        container.innerHTML = lista.map((file, idx) => `
+          <div class="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group animate-fade-in" style="animation-delay: ${idx * 40}ms">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg ${file.iconoColor} flex items-center justify-center text-base shrink-0">
+                <i class="fa-solid ${file.icono}"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">${file.titulo}</h4>
+                  <span class="text-[10px] px-2 py-0.5 rounded border ${file.badgeColor}">${file.categoria}</span>
+                </div>
+                <p class="text-xs text-slate-400 font-mono mt-0.5">${file.filename}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 self-end sm:self-auto">
+              <button 
+                onclick="abrirModal('${file.filename}', '${escapeJsStr(file.titulo)}')" 
+                class="py-1.5 px-3 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 font-medium text-xs rounded-lg transition-colors border border-slate-200 flex items-center gap-1"
+              >
+                <i class="fa-solid fa-eye text-xs"></i> Previsualizar
+              </button>
+              <a 
+                href="${file.filename}" 
+                class="py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+              >
+                <span>Abrir</span> <i class="fa-solid fa-arrow-right text-[10px]"></i>
+              </a>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Filtrar documentos en la búsqueda
+    function filtrarDocumentos() {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      if (!q) {
+        renderizarArchivos(todosLosArchivos);
+        return;
+      }
+      const filtrados = todosLosArchivos.filter(f => 
+        f.titulo.toLowerCase().includes(q) || 
+        f.filename.toLowerCase().includes(q) || 
+        f.descripcion.toLowerCase().includes(q) ||
+        f.categoria.toLowerCase().includes(q)
+      );
+      renderizarArchivos(filtrados);
+    }
+
+    // Cambiar vista (cuadrícula / lista)
+    function setVista(tipo) {
+      vistaActual = tipo;
+      const btnGrid = document.getElementById('btn-vista-grid');
+      const btnList = document.getElementById('btn-vista-list');
+
+      if (tipo === 'grid') {
+        btnGrid.className = "p-2 rounded-lg bg-blue-600 text-white transition-colors text-sm shadow-sm";
+        btnList.className = "p-2 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors text-sm";
+      } else {
+        btnList.className = "p-2 rounded-lg bg-blue-600 text-white transition-colors text-sm shadow-sm";
+        btnGrid.className = "p-2 rounded-lg bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors text-sm";
+      }
+      filtrarDocumentos();
+    }
+
+    // Funciones del Modal Previsualizador
+    function abrirModal(url, titulo) {
+      const modal = document.getElementById('preview-modal');
+      const modalIframe = document.getElementById('modal-iframe');
+      const modalTitle = document.getElementById('modal-title');
+      const modalFilename = document.getElementById('modal-filename');
+      const modalExtLink = document.getElementById('modal-external-link');
+      const loading = document.getElementById('modal-loading');
+
+      modalTitle.textContent = titulo;
+      modalFilename.textContent = url;
+      modalExtLink.href = url;
+      loading.classList.remove('hidden');
+
+      modalIframe.src = url;
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModal() {
+      const modal = document.getElementById('preview-modal');
+      const modalIframe = document.getElementById('modal-iframe');
+      modal.classList.add('hidden');
+      modalIframe.src = 'about:blank';
+      document.body.style.overflow = '';
+    }
+
+    function imprimirIframe() {
+      const iframe = document.getElementById('modal-iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+    }
+
+    function escapeJsStr(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModal();
+    });
+
+    // Inicializar al cargar la página
+    document.addEventListener('DOMContentLoaded', () => {
+      inspeccionarDirectorio();
+    });
+  </script>
+</body>
+</html>

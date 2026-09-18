@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulos de Bienestar Social | UPTPC</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
+          boxShadow: {
+            'card-hover': '0 20px 35px -10px rgba(19, 64, 116, 0.18)',
+            'xl-modal': '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.35s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 p-4 sm:p-8 flex flex-col justify-center items-center">
+
+  <div class="max-w-6xl w-full mx-auto">
+    
+    <!-- ENCABEZADO IDÉNTICO A LA IMAGEN -->
+    <div class="mb-8">
+      <h2 class="text-2xl sm:text-3xl font-extrabold font-display text-slate-900 flex items-center gap-3">
+        <i class="fa-solid fa-folder-open text-blue-600"></i>
+        Módulos y Documentos Disponibles
+      </h2>
+      <p class="text-sm text-slate-500 mt-1 font-medium">
+        Visualización y acceso directo a todos los archivos HTML publicados en <code class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-mono font-semibold border border-blue-200">/bienestar</code>
+      </p>
+    </div>
+
+    <!-- CUADRÍCULA DE LAS 2 TARJETAS SOLO CON BOTÓN MODAL XL -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- TARJETA 1: Red de Proveedores Médicos -->
+      <div class="bg-white rounded-2xl p-6 sm:p-7 shadow-sm hover:shadow-card-hover transition-all duration-300 border border-slate-200/80 relative group flex flex-col justify-between">
+        <div class="absolute top-0 right-0 w-36 h-36 bg-blue-500/5 rounded-bl-full pointer-events-none group-hover:scale-105 transition-transform"></div>
+        
+        <div>
+          <!-- Badge & Name -->
+          <div class="flex items-center justify-between mb-5">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 flex items-center gap-1.5 border border-blue-200">
+              <i class="fa-solid fa-star text-amber-500"></i> Módulo Principal
+            </span>
+            <span class="text-xs text-slate-400 font-mono">directorio_proveedores.html</span>
+          </div>
+
+          <!-- Icon & Title -->
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl shadow-md shadow-blue-600/25 shrink-0">
+              <i class="fa-solid fa-hospital-user"></i>
+            </div>
+            <div>
+              <h3 class="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight">
+                Red de Proveedores Médicos
+              </h3>
+              <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+                Directorio interactivo completo con clínicas afiliadas, médicos especialistas, laboratorios, farmacias y servicios de emergencia con búsqueda avanzada y filtros por estado y especialidad.
+              </p>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2 my-6">
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-stethoscope text-blue-500"></i> Especialidades
+            </span>
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-pills text-emerald-500"></i> Farmacias
+            </span>
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-file-pdf text-rose-500"></i> Exportación PDF
+            </span>
+          </div>
+        </div>
+
+        <!-- ÚNICO BOTÓN: ABRIR EN MODAL XL -->
+        <div class="pt-5 border-t border-slate-100">
+          <button 
+            onclick="abrirModalXL('directorio_proveedores.html', 'Red de Proveedores Médicos')"
+            class="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 group-hover:bg-blue-700"
+          >
+            <i class="fa-solid fa-window-restore text-base"></i>
+            <span>Ver en Modal XL</span>
+            <i class="fa-solid fa-expand text-xs ml-auto opacity-75"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- TARJETA 2: Cobertura y Límites Contratados -->
+      <div class="bg-white rounded-2xl p-6 sm:p-7 shadow-sm hover:shadow-card-hover transition-all duration-300 border border-slate-200/80 relative group flex flex-col justify-between">
+        <div class="absolute top-0 right-0 w-36 h-36 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-105 transition-transform"></div>
+        
+        <div>
+          <!-- Badge & Name -->
+          <div class="flex items-center justify-between mb-5">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 flex items-center gap-1.5 border border-amber-200">
+              <i class="fa-solid fa-shield-halved text-amber-600"></i> Tabla de Coberturas
+            </span>
+            <span class="text-xs text-slate-400 font-mono">tabla_optimizada.html</span>
+          </div>
+
+          <!-- Icon & Title -->
+          <div class="flex items-start gap-4 mb-4">
+            <div class="w-14 h-14 rounded-2xl bg-amber-600 text-white flex items-center justify-center text-2xl shadow-md shadow-amber-600/25 shrink-0">
+              <i class="fa-solid fa-table-list"></i>
+            </div>
+            <div>
+              <h3 class="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-amber-600 transition-colors leading-tight">
+                Cobertura y Límites Contratados (2026)
+              </h3>
+              <p class="text-slate-600 text-sm mt-2 leading-relaxed">
+                Tabla detallada con los montos máximos, límites de atención médica por grupo familiar, hospitalización, cirugía, maternidad y atención primaria de salud.
+              </p>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="flex flex-wrap gap-2 my-6">
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-house-medical text-amber-500"></i> Hospitalización
+            </span>
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-baby text-indigo-500"></i> Maternidad
+            </span>
+            <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-medium flex items-center gap-1.5">
+              <i class="fa-solid fa-truck-medical text-rose-500"></i> Ambulancia
+            </span>
+          </div>
+        </div>
+
+        <!-- ÚNICO BOTÓN: ABRIR EN MODAL XL -->
+        <div class="pt-5 border-t border-slate-100">
+          <button 
+            onclick="abrirModalXL('tabla_optimizada.html', 'Cobertura y Límites Contratados (2026)')"
+            class="w-full py-3 px-6 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm rounded-xl transition-all shadow-md shadow-amber-600/20 flex items-center justify-center gap-2 group-hover:bg-amber-700"
+          >
+            <i class="fa-solid fa-window-restore text-base"></i>
+            <span>Ver en Modal XL</span>
+            <i class="fa-solid fa-expand text-xs ml-auto opacity-75"></i>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ================= VENTANA MODAL FORMATO XL ================= -->
+  <div 
+    id="modal-xl" 
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 lg:p-6 transition-all"
+    onclick="cerrarModalAlClicFuera(event)"
+  >
+    <!-- Modal Container XL (Extra Large: 96% ancho y 94% alto) -->
+    <div class="bg-white rounded-2xl shadow-xl-modal w-[96vw] max-w-7xl h-[94vh] flex flex-col overflow-hidden border border-slate-700/30 animate-fade-in">
+      
+      <!-- Modal Header -->
+      <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-base shadow-sm">
+            <i class="fa-solid fa-window-maximize"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 id="modal-xl-title" class="font-bold text-base sm:text-lg text-white truncate max-w-xs sm:max-w-md">Vista Modal XL</h3>
+              <span class="px-2 py-0.5 rounded bg-blue-500/20 text-sky-300 text-[10px] font-bold tracking-wider uppercase border border-sky-400/30">Formato XL</span>
+            </div>
+            <span id="modal-xl-filename" class="text-xs text-slate-400 font-mono block -mt-0.5">documento.html</span>
+          </div>
+        </div>
+
+        <!-- Acciones del Modal -->
+        <div class="flex items-center gap-2">
+          <a 
+            id="modal-xl-ext-link" 
+            href="#" 
+            target="_blank" 
+            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700"
+            title="Abrir en pestaña nueva"
+          >
+            <i class="fa-solid fa-up-right-from-square text-xs"></i>
+            <span class="hidden sm:inline">Nueva Pestaña</span>
+          </a>
+          <button 
+            onclick="imprimirModalXL()" 
+            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700"
+            title="Imprimir documento"
+          >
+            <i class="fa-solid fa-print text-xs"></i>
+            <span class="hidden sm:inline">Imprimir</span>
+          </button>
+          <button 
+            onclick="cerrarModalXL()" 
+            class="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white transition-colors flex items-center justify-center ml-2 border border-rose-500/30"
+            title="Cerrar modal (ESC)"
+          >
+            <i class="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body (Iframe XL) -->
+      <div class="flex-1 bg-slate-100 relative">
+        <div id="modal-xl-loader" class="absolute inset-0 flex items-center justify-center bg-white/90 z-10 transition-opacity">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-sm font-semibold text-slate-700">Cargando contenido en formato XL...</span>
+          </div>
+        </div>
+        <iframe 
+          id="modal-xl-iframe" 
+          class="w-full h-full border-none" 
+          onload="document.getElementById('modal-xl-loader').classList.add('hidden')"
+        ></iframe>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JS LOGIC -->
+  <script>
+    function abrirModalXL(url, titulo) {
+      const modal = document.getElementById('modal-xl');
+      const iframe = document.getElementById('modal-xl-iframe');
+      const modalTitle = document.getElementById('modal-xl-title');
+      const modalFilename = document.getElementById('modal-xl-filename');
+      const extLink = document.getElementById('modal-xl-ext-link');
+      const loader = document.getElementById('modal-xl-loader');
+
+      modalTitle.textContent = titulo;
+      modalFilename.textContent = url;
+      extLink.href = url;
+
+      loader.classList.remove('hidden');
+      iframe.src = url;
+
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function cerrarModalXL() {
+      const modal = document.getElementById('modal-xl');
+      const iframe = document.getElementById('modal-xl-iframe');
+      modal.classList.add('hidden');
+      iframe.src = 'about:blank';
+      document.body.style.overflow = '';
+    }
+
+    function cerrarModalAlClicFuera(event) {
+      if (event.target.id === 'modal-xl') {
+        cerrarModalXL();
+      }
+    }
+
+    function imprimirModalXL() {
+      const iframe = document.getElementById('modal-xl-iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      }
+    }
+
+    // Tecla ESC para cerrar modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModalXL();
+    });
+  </script>
+</body>
+</html>

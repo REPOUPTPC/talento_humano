@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red de Proveedores Médicos - Bienestar Social UPTPC</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- jsPDF & jsPDF AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            uptpc: {
+              navy: '#0b2545',
+              dark: '#07182c',
+              blue: '#134074',
+              light: '#8da9c4',
+              ice: '#eef4f8',
+              gold: '#c59b27',
+              goldLight: '#f3e8c8'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col bg-slate-50">
+
+  <!-- Top Institutional Banner -->
+  <header class="bg-gradient-to-r from-uptpc-dark via-uptpc-navy to-uptpc-blue text-white shadow-lg border-b-4 border-uptpc-gold">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Logo & Institution details -->
+        <div class="flex items-center space-x-4 text-center md:text-left">
+          <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center p-2 text-uptpc-gold shadow-inner">
+            <i class="fa-solid fa-graduation-cap text-3xl"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 justify-center md:justify-start">
+              <span class="text-xs uppercase tracking-widest text-uptpc-gold font-bold">República Bolivariana de Venezuela</span>
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-uptpc-gold"></span>
+              <span class="text-xs uppercase tracking-wider text-slate-300">MPPEU</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight">
+              UPTPC Puerto Cabello
+            </h1>
+            <p class="text-xs sm:text-sm font-medium text-slate-200">
+              Dirección de Bienestar Social &bull; <span class="text-uptpc-gold font-semibold">Convenio Seguros Miranda</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Master PDF Action Button -->
+        <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-end">
+          <button onclick="generarPDFCompleto()" id="btnDescargarNacional" 
+            class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-uptpc-gold hover:bg-yellow-500 text-uptpc-dark font-bold text-sm shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+            <i class="fa-solid fa-file-pdf text-lg"></i>
+            <span>Descargar Directorio Completo</span>
+            <span id="badgeTotalDirectorio" class="ml-1 bg-uptpc-dark text-white text-xs px-2 py-0.5 rounded-full">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- Hero / Information Card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 transition-all">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div>
+          <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-uptpc-blue mb-1">
+            <i class="fa-solid fa-notes-medical"></i> Catálogo de Salud para el Personal Docente, Administrativo y Obrero
+          </div>
+          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Red de Proveedores de Salud y Clínicas
+          </h2>
+          <p class="text-sm text-slate-500 mt-1 max-w-2xl">
+            Selecciona tu zona geográfica para consultar clínicas, centros APS y farmacias aliadas. Puedes descargar la constancia de directorio en PDF por zona o nacional con el sello institucional.
+          </p>
+        </div>
+
+        <!-- Metric badges -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+            <div class="text-blue-600 text-xs font-semibold uppercase">Clínicas</div>
+            <div id="statClinicas" class="text-xl font-bold text-blue-900 mt-0.5">0</div>
+          </div>
+          <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 text-center">
+            <div class="text-emerald-600 text-xs font-semibold uppercase">APS</div>
+            <div id="statAPS" class="text-xl font-bold text-emerald-900 mt-0.5">0</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 text-center">
+            <div class="text-amber-600 text-xs font-semibold uppercase">Farmacias</div>
+            <div id="statFarmacias" class="text-xl font-bold text-amber-900 mt-0.5">0</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-5 border-slate-100">
+
+      <!-- Quick Access Pills (Valencia, Puerto Cabello, Maracay, Caracas, Barquisimeto, etc.) -->
+      <div>
+        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+          <i class="fa-solid fa-location-dot text-uptpc-blue mr-1"></i> Accesos Directos a Zonas Frecuentes:
+        </span>
+        <div class="flex flex-wrap gap-2" id="quickPillsContainer">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+        
+        <!-- Estado Selector -->
+        <div class="md:col-span-3">
+          <label for="selectEstado" class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            <i class="fa-solid fa-map mr-1 text-slate-400"></i> Estado
+          </label>
+          <select id="selectEstado" onchange="onEstadoChange()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-uptpc-blue focus:outline-none transition">
+            <option value="TODOS">Todos los Estados</option>
+          </select>
+        </div>
+
+        <!-- Ciudad / Zona Selector -->
+        <div class="md:col-span-3">
+          <label for="selectCiudad" class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            <i class="fa-solid fa-city mr-1 text-slate-400"></i> Ciudad / Zona
+          </label>
+          <select id="selectCiudad" onchange="onCiudadChange()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-uptpc-blue focus:outline-none transition">
+            <option value="TODAS">Todas las Ciudades</option>
+          </select>
+        </div>
+
+        <!-- Tipo de Servicio -->
+        <div class="md:col-span-2">
+          <label for="selectServicio" class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            <i class="fa-solid fa-stethoscope mr-1 text-slate-400"></i> Servicio
+          </label>
+          <select id="selectServicio" onchange="filtrarYRenderizar()" class="w-full rounded-xl border border-slate-300 bg-white py-2.5 px-3 text-sm font-medium focus:ring-2 focus:ring-uptpc-blue focus:outline-none transition">
+            <option value="TODOS">Cualquiera</option>
+            <option value="CLINICA">Clínica</option>
+            <option value="APS">APS</option>
+            <option value="FARMACIA">Farmacia</option>
+          </select>
+        </div>
+
+        <!-- Búsqueda rápida por texto -->
+        <div class="md:col-span-4">
+          <label for="inputBusqueda" class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            <i class="fa-solid fa-magnifying-glass mr-1 text-slate-400"></i> Búsqueda Rápida
+          </label>
+          <div class="relative">
+            <input type="text" id="inputBusqueda" oninput="filtrarYRenderizar()" placeholder="Nombre, RIF, dirección o teléfono..." 
+              class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-8 text-sm focus:ring-2 focus:ring-uptpc-blue focus:outline-none transition">
+            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <button id="btnClearSearch" onclick="limpiarBusqueda()" class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 hidden">
+              <i class="fa-solid fa-circle-xmark text-sm"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action & View Toolbar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-sm">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <span class="text-xs font-semibold text-slate-500">Mostrando:</span>
+          <span id="labelConteoFiltrados" class="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg text-xs">
+            0 resultados
+          </span>
+          <span id="labelZonaActual" class="text-xs text-uptpc-blue font-bold px-2.5 py-1 bg-uptpc-ice rounded-lg truncate max-w-[200px] sm:max-w-none">
+            Todas las zonas
+          </span>
+        </div>
+
+        <!-- Single Zone PDF button + View switcher -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <button id="btnDescargarZona" onclick="generarPDFZonaSeleccionada()" 
+            class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs shadow-sm transition">
+            <i class="fa-solid fa-file-arrow-down"></i>
+            <span>Descargar PDF de esta Zona</span>
+          </button>
+
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+            <button onclick="cambiarVista('grid')" id="btnVistaGrid" class="p-1.5 rounded-lg text-xs font-semibold text-uptpc-navy bg-white shadow-sm" title="Vista Cuadrícula">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+            <button onclick="cambiarVista('tabla')" id="btnVistaTabla" class="p-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-uptpc-navy" title="Vista Tabla">
+              <i class="fa-solid fa-list"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid View -->
+    <div id="contenedorGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Generated Cards -->
+    </div>
+
+    <!-- Table View (Hidden by default) -->
+    <div id="contenedorTabla" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden">
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider">
+            <tr>
+              <th class="p-3">Servicio</th>
+              <th class="p-3">Proveedor / R.I.F.</th>
+              <th class="p-3">Ubicación</th>
+              <th class="p-3">Teléfonos</th>
+              <th class="p-3">Dirección</th>
+              <th class="p-3 text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tablaResultadosBody" class="divide-y divide-slate-100 font-normal">
+            <!-- Rows -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="contenedorVacio" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+      <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400 text-2xl mb-3">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </div>
+      <h3 class="text-base font-bold text-slate-800">No se encontraron prestadores de salud</h3>
+      <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+        Prueba cambiando el filtro de estado, la ciudad seleccionada o limpiando el texto de búsqueda.
+      </p>
+      <button onclick="resetearFiltros()" class="mt-4 px-4 py-2 bg-uptpc-navy text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition">
+        Restablecer todos los filtros
+      </button>
+    </div>
+
+  </main>
+
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-slate-700 text-xs">
+      <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+      <span id="toastMessage">Acción completada con éxito</span>
+    </div>
+  </div>
+
+  <footer class="bg-uptpc-dark text-slate-400 text-xs border-t border-slate-800 mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+      <div>
+        <p class="font-semibold text-slate-200">Universidad Politécnica Territorial de Puerto Cabello (UPTPC)</p>
+        <p class="text-slate-400">Dirección de Bienestar Social &bull; Unidad de Atención Médica y Seguros</p>
+      </div>
+      <div class="flex items-center justify-center gap-4 text-slate-300">
+        <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-shield-heart text-uptpc-gold"></i> Red Seguros Miranda</span>
+        <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-location-pin text-rose-500"></i> Puerto Cabello, Edo. Carabobo</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Complete structured database extracted directly from the official RED DE PROVEEDORES PDF
+    const PROVEEDORES_DB = [
+      // A NIVEL NACIONAL
+      { rif: "J-500296681", nombre: "FARMACIA FARMAGO, C.A.", servicio: "FARMACIA", estado: "A NIVEL NACIONAL", ciudad: "A NIVEL NACIONAL", telf: "0424-2093984", dir: "AV ROMULO GALLEGOS EDIF GAMMA, PB, LOCAL 1 URB EL MARQUES" },
+      { rif: "J-411359890", nombre: "BIODYNAMICS SERVICES, C.A", servicio: "CLINICA", estado: "A NIVEL NACIONAL", ciudad: "A NIVEL NACIONAL", telf: "0241-8236855", dir: "AV 96 (PASEO CAPRILES) EDIFICIO TORRE BANCO OCCIDENTAL DE DESCUENTO PISO B Y MEZZANINA OF NROS P-1 Y J-1 URB. SAN JOSE DE TARBES" },
+      { rif: "J-501169144", nombre: "FARMACIA NUEVA FE, C.A", servicio: "CLINICA", estado: "A NIVEL NACIONAL", ciudad: "A NIVEL NACIONAL", telf: "0412-0277059", dir: "CARRERA 25 CON ESQUINA DE LA CALLE 46 LOCAL 03 ZONA CENTRO" },
+      { rif: "J-500328800", nombre: "REDVITAL COMERCIALIZADORA, C.A", servicio: "FARMACIA", estado: "A NIVEL NACIONAL", ciudad: "A NIVEL NACIONAL", telf: "Atención en tienda", dir: "AV PRINCIPAL LOCAL LOTE 95-A-351 SECTOR FUNDO LOS MANIRES, SAN DIEGO" },
+      { rif: "J-304985185", nombre: "SIGMA DOMUS, C.A", servicio: "APS", estado: "A NIVEL NACIONAL", ciudad: "A NIVEL NACIONAL", telf: "0800-7446233", dir: "AV. EUGENIO MENDOZA CON PRIMERA TRANSVERSAL, EDF TORRE BANCO DE LARA, PISO 11, OF B1,B2,C1,C2 URB LA CASTELLANA" },
+
+      // AMAZONAS
+      { rif: "J-500901097", nombre: "CENTRO DE SALUD AMBULATORIO JUAN BOSCO C.A", servicio: "CLINICA", estado: "AMAZONAS", ciudad: "PUERTO AYACUCHO", telf: "0426-3438388", dir: "NRO 22 SECTOR CENTRO PUERTO AYACUCHO AMAZONAS" },
+      { rif: "J-095193586", nombre: "CENTRO MEDICO AMAZONAS, C.A", servicio: "CLINICA", estado: "AMAZONAS", ciudad: "PUERTO AYACUCHO", telf: "0416-5184592 / 0248-5213883", dir: "AV ROMULO GALLEGOS EDIF CENTRO MEDICO AMAZONAS PISO PB OF 01 SECTOR LOMAS VERDE" },
+
+      // ANZOATEGUI
+      { rif: "J-503403411", nombre: "(CEMI) CENTRO ESPECIALIZADO MATERNO INFANTIL, C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "LECHERIA", telf: "0424-8179992", dir: "CALLE ARISMENDI CC PALM BEACH NIVEL 1 LOCAL P41-A SECTOR VISTA MAR LECHERIAS" },
+      { rif: "J-080247639", nombre: "CENTRO CLINICO SANTA ANA, C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0281-5009235 / 0414-8315910", dir: "AV PRINCIPAL QTA NO. 43 URB CARIBE PUERTO LA CRUZ" },
+      { rif: "J-402526717", nombre: "CENTRO DE ESPECIALIDADES MEDICAS COLINA, C.A", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0424-1295581 / 0412-8593026", dir: "AV GUZMAN LANDER EDIF CENTRO DE ESPECIALIDADES COLINA, PB LOCAL S/N SECTOR COLINAS DE NEVERI" },
+      { rif: "J-294331556", nombre: "CENTRO MATERNO INFANTIL LA MATERNIDAD C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "EL TIGRE", telf: "0414-2546628 / 0424-8533714", dir: "AV PEÑALVER EDF EDIFICIO PEÑALVER PISO P-B OF EDIFICIO PEÑALVER ZONA CENTRAL" },
+      { rif: "J-296906572", nombre: "CENTRO MEDICO BRICEÑO, C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0281-2659940 / 0414-3807764", dir: "CALLE PAEZ, LOCAL NRO 29, SECTOR TIERRA ADENTRO PUERTO LA CRUZ" },
+      { rif: "J-313803413", nombre: "CENTRO MEDICO DR. JOSE MARIA VARGAS C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "EL TIGRE", telf: "0424-8342334 / 0283-2353984", dir: "CALLE SEGUNDA NORTE LOCAL Nº 11 SECTOR PUEBLO NUEVO NORTE" },
+      { rif: "J-500959087", nombre: "CENTRO MEDICO QUIRURGICO SAN FRANCISCO C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0412-9944631 / 0414-8244231", dir: "CALLE MIRANDA Nº 35 EDIF CENTRO ART PROFESIONAL PISO 1 LOCAL P1-1" },
+      { rif: "J-301511425", nombre: "CENTRO MEDICO TOTAL LECHERIA, C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "LECHERIA", telf: "0424-8845211", dir: "AV JORGE RODRIGUEZ EDIF MEDITOTAL PISO PB LOCAL MEDITOTAL SECTOR LAS GARZAS" },
+      { rif: "J-301263634", nombre: "CENTRO MEDICO TOTAL, C.A", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0414-8205067", dir: "CALLE FREITES EDIF CENTRO MEDICO TOTAL PISO PB, SECTOR CENTRO" },
+      { rif: "J-080037863", nombre: "CENTRO MEDICO ZAMBRANO, C.A", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0281-2701191 / 0412-0415113", dir: "AV CARACAS EDIF CENTRO MEDICO ZAMBRANO, PISO 1 LOCAL 1 SECTOR BUENOS AIRES" },
+      { rif: "J-501298840", nombre: "CUIDA TU SALUD 24/7 PLUS, C.A", servicio: "APS", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0281-5812620 / 0412-4667526", dir: "CALLE GULF, NRO F66 SECTOR F GUANIRE PUERTO LA CRUZ" },
+      { rif: "J-412812939", nombre: "FARMACIA CHAARANI, C.A.", servicio: "FARMACIA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0424-8942785", dir: "CALLE JUNCAL LOCAL NRO 19-02 SECTOR CENTRO, PUERTO LA CRUZ" },
+      { rif: "J-402398450", nombre: "FARMACIA COLINA, C.A.", servicio: "FARMACIA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0281-2826299", dir: "AV GUZMAN LANDER EDIF CENTRO DE ESPECIALIDADES MEDICAS COLINA PISO PB LOCAL PB-01" },
+      { rif: "J-501730121", nombre: "GRUPO MEDICO PAIN OFF, C.A", servicio: "APS", estado: "ANZOATEGUI", ciudad: "LECHERIA", telf: "0412-8693783", dir: "AV PPAL DE LECHERIA, CC FORUM PLAZA NIVEL 1 LOCAL S/N LECHERIA" },
+      { rif: "J-501580731", nombre: "HI DR. C.A.", servicio: "APS", estado: "ANZOATEGUI", ciudad: "LECHERIA", telf: "0281-2825261 / 0412-7943487", dir: "AV. PRINCIPAL DE LECHERIA CC EMPRESARIAL NIVEL PB LOCAL PB-04 SECTOR LAS PALMERAS" },
+      { rif: "J-503089580", nombre: "OPERADORA DE SERVICIOS DE SALUD OSERSA, C.A", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0412-1402711", dir: "AV FUERZAS ARMADAS CC RIBIERA REAL NIVEL PB 14 SECTOR CENTRO BARCELONA" },
+      { rif: "J-501747946", nombre: "OPTICA COLOR VISION CA", servicio: "APS", estado: "ANZOATEGUI", ciudad: "LECHERIA", telf: "0414-7891891", dir: "AV. DANIEL CAMEJO OCTAVIO, CC PLAZA MAYOR, EDIFICIO 5 Y 6, NIVEL PB, LOCAL 50 Y 1" },
+      { rif: "J-080200861", nombre: "POLICLINICA PUERTO LA CRUZ", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "PUERTO LA CRUZ", telf: "0281-2656367 / 0281-2673615", dir: "AV. 5 DE JULIO CON CALLE ARISMENDI" },
+      { rif: "J-401218903", nombre: "SEMKA, C.A", servicio: "APS", estado: "ANZOATEGUI", ciudad: "ORINOCO", telf: "0285-6711429", dir: "AV GUZMAN BLANCO SECTOR CENTRO SOLEDAD, ORINOCO, MUNICIPIO INDEPENDENCIA" },
+      { rif: "J-500988753", nombre: "SUMMASALUD FARMACIAS C.A.", servicio: "FARMACIA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0424-8223109", dir: "AV JORGE RODRIGUEZ, CC EMPRESARIAL NUEVA PRENSA, NIVEL PB, LOCAL 01, SECTOR LAS GARZAS" },
+      { rif: "J-500742460", nombre: "SUMMASALUD LG C.A.", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0281-2749546", dir: "AV. JORGE RODRIGUEZ EDIF. CENTRO EMPRESARIAL NUEVA PRENSA PISO PB LOCAL 4" },
+      { rif: "J-298045167", nombre: "SUMMASALUD, C.A", servicio: "APS", estado: "ANZOATEGUI", ciudad: "BARCELONA", telf: "0281-2749546 / 0281-2743831", dir: "AV. COUNTRY CLUB CC PLAZA COUNTRY NIVEL PB LOCAL 01-02-03-04 ZONA CENTRO" },
+      { rif: "J-401800440", nombre: "UNIDAD QUIRURGICA ANZOATEGUI", servicio: "CLINICA", estado: "ANZOATEGUI", ciudad: "EL TIGRE", telf: "0414-1929172", dir: "CALLE PRIMERA NORTE CRUCE CON CARRERA 11 EDIF CEMMI PISO PB OF S/N SECTOR PUEBLO NUEVO NORTE" },
+
+      // APURE
+      { rif: "J-309801694", nombre: "CENTRO CLINICO COROMOTO, C.A", servicio: "CLINICA", estado: "APURE", ciudad: "SAN FERNANDO DE APURE", telf: "0247-3420891", dir: "CALLE NEGRO PRIMERO CC COROMOTO, NIVEL PB, LOCAL 1 SECTOR CENTRO" },
+      { rif: "J-304650752", nombre: "CENTRO CLINICO SAN FERNANDO C.A", servicio: "CLINICA", estado: "APURE", ciudad: "SAN FERNANDO DE APURE", telf: "0247-3410515", dir: "CALLE MERIDA EDIF CENTRO CLINICO SAN FERNANDO PISO 01 OF 01 SECTOR MI CABAÑA" },
+      { rif: "J-305135983", nombre: "CENTRO MEDICO DEL SUR CA", servicio: "CLINICA", estado: "APURE", ciudad: "SAN FERNANDO DE APURE", telf: "0247-3415262", dir: "AV REVOLUCION EDIF CENTRO MEDICO DEL SUR PISO PB LOCAL S/N SECTOR CENTRO" },
+      { rif: "J-408552434", nombre: "CENTRO MEDICO QUIRURGICO SU SALUD, C.A", servicio: "CLINICA", estado: "APURE", ciudad: "SAN FERNANDO DE APURE", telf: "0247-3418362 / 0424-3286229", dir: "CALLE PEÑALOZA CASA S/N CASERIO TERROR DURO SECTOR I" },
+      { rif: "J-302487072", nombre: "POLICLINICO JOSE MARIA VARGAS C.A.", servicio: "CLINICA", estado: "APURE", ciudad: "SAN FERNANDO DE APURE", telf: "0247-3413516", dir: "CALLE SUCRE C/C EL ENCUENTRO EDIF MARIA VARGAS PISO P/A OF 01 SECTOR CENTRO" },
+
+      // ARAGUA
+      { rif: "J-294542093", nombre: "FARMACIA ARIYANI, C.A. (GRUPO ENVIAMED)", servicio: "FARMACIA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2468536", dir: "AV. MARIÑO SUR, LOCAL N 207, SECTOR SAN IGNACIO. MARACAY" },
+      { rif: "J-403538280", nombre: "FARMACIA JAHNRALE, C.A (GRUPO ENVIAMED)", servicio: "FARMACIA", estado: "ARAGUA", ciudad: "CAGUA", telf: "0414-5984697", dir: "AV. PPAL. ZONA INDUSTRIAL SANTA ROSALÍA Y CARRETERA TRONCAL LA ENCRUCIJADA - VILLA DE CURA, FORUM" },
+      { rif: "J-296488630", nombre: "+SALUD, C.A", servicio: "APS", estado: "ARAGUA", ciudad: "MARACAY", telf: "0414-2958277", dir: "AV JOSE MARIA VARGAS LOCAL NRO 19-A URB LA FLORESTA" },
+      { rif: "J-402397453", nombre: "CEMAT, CENTRO MEDICO DE ALTA TECNOLOGIA", servicio: "APS", estado: "ARAGUA", ciudad: "MARACAY", telf: "0414-4784865 / 0243-2468009", dir: "CALLE MARIÑO SUR, CC EMPRESARIAL UNIARAGUA, NIVEL MEZZANINA, LOCAL M-9, SECTOR CENTRO" },
+      { rif: "J-311134328", nombre: "CENTRO QUIRURGICO DEL NORTE, CA", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2170435", dir: "CALLE LOPEZ AVELEDO, EDF TORRE CALICANTO PISO 3 APTO 1 URB CALICANTO" },
+      { rif: "J-294805221", nombre: "CENTRO QUIRURGICO MARACAY, C.A.", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0412-1442586", dir: "AV JOSE MARIA VARGAS LOCAL NRO 19-A URB LA FLORESTA" },
+      { rif: "J-000069182", nombre: "CLINICA CALICANTO, C.A", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-3000601 / 0243-3000602", dir: "CALLE SUCRE LOCAL NRO 43 URB. CALICANTO, MARACAY" },
+      { rif: "J-075841662", nombre: "HOSPITAL DE CLINICAS ARAGUA C.A.", servicio: "CLINICA", estado: "ARAGUA", ciudad: "LA VICTORIA", telf: "0244-3227744 / 0244-3217612", dir: "CALLE JUAN VICENTE BOLIVAR Y PONTE C/C GARCIA DE SENA CASA Nº 99 URB BOLIVAR NORTE" },
+      { rif: "J-307532777", nombre: "INVERSIONES VIRGEN DE GUADALUPE C.A.", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2406736 / 0243-2406737", dir: "CALLE COROMOTO, C/C 2da TRANSVERSAL, LOCAL EDIFICIO CLINICA GUADALUPE, URB CALICANTO" },
+      { rif: "J-405186151", nombre: "OSTEOMEDIC C.A", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0424-3516495 / 0412-1329276", dir: "CALLE 1 ENTRE MIRANDA Y BOLIVAR EDIF TORRES SINDONI, PISO 18 OF 18-5 SECTOR CENTRO" },
+      { rif: "J-506691426", nombre: "SERVICIOS MEDICOS PREMIER, C.A.", servicio: "APS", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2475597 / 0414-2310546", dir: "CALLE LOPEZ AVELEDO EDIF TORRE CALICANTO I PISO 6 URB CALICANTO" },
+      { rif: "J-312818093", nombre: "PREVALER MARACAY C.A.", servicio: "APS", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2467730 / 0500-7738253", dir: "AV 19 DE ABRIL ENTRE C/ LOPEZ AVELEDO Y SUCRE CC LA GALERIA NIVEL PB LOCAL 5-6-7 SECTOR CENTRO" },
+      { rif: "J-407238400", nombre: "UNIDAD QUIRURGICA OFTALMOLOGICA SANTA LUCIA, C.A", servicio: "CLINICA", estado: "ARAGUA", ciudad: "MARACAY", telf: "0243-2453582 / 0412-9889363", dir: "AV SANTOS MICHELENA CC CAPILLA II NIVEL PB LOCAL 12-15-16 SECTOR CENTRO ESTE" },
+
+      // BARINAS
+      { rif: "J-302553601", nombre: "CENTRO CLINICO SANTA FE, C.A", servicio: "CLINICA", estado: "BARINAS", ciudad: "BARINAS", telf: "0273-5529992", dir: "CALLE MERIDA CON CALLE MONAGAS EDF CENTRO CLINICO SANTA FE, PISO 01 URB SAN JOSE" },
+      { rif: "J-501127042", nombre: "CENTRO MEDICO PEDIATRICO Y NEONATAL DR. KIDS C.A.", servicio: "CLINICA", estado: "BARINAS", ciudad: "BARINAS", telf: "0424-5194479", dir: "AV LOS ANDES CRUCE CON AVENIDA LOS TOROS CC SAN JUAN NIVEL PB LOCAL S/N" },
+      { rif: "J-090050000", nombre: "CLINICA CENTRO MEDICO BARINAS, C.A.", servicio: "CLINICA", estado: "BARINAS", ciudad: "BARINAS", telf: "0416-5015763 / 0273-5523702", dir: "CALLE CEDEÑO CRUCE CON AVENIDA MIJAGUA LOCAL Nº S/N SECTOR CHUPA CHUPA" },
+      { rif: "C-505027719", nombre: "CONSEJO COMUNAL UPF CENTRO CLINICO REY DE REYES", servicio: "APS", estado: "BARINAS", ciudad: "BARINAS", telf: "0414-509940 / 0424-1325060", dir: "CALLE CEDEÑO SECTOR CENTRO, CENTRO COMERCIAL GIMMA. LOCAL 5" },
+      { rif: "J-305200718", nombre: "HOSPITAL PRIVADO SAN JUAN, C.A.", servicio: "CLINICA", estado: "BARINAS", ciudad: "BARINAS", telf: "0273-5320018 / 0424-5031415", dir: "AV RONDON CRUCE CON CALLE MERIDA EDF HOSPITAL PRIVADO SAN JUAN PISO PB LOCAL 11-51" },
+      { rif: "J-500949391", nombre: "SERVIMEDICAL A&L, C.A", servicio: "APS", estado: "BARINAS", ciudad: "BARINAS", telf: "0412-60042807", dir: "AV AGUSTIN CODAZZI C/AV 23 DE ENERO CC DOÑA NERY NIVEL PB" },
+
+      // BOLIVAR
+      { rif: "J-296040320", nombre: "CENTRO OFTALMOLOGICO UNARE, CA", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD GUAYANA", telf: "0286-9520146", dir: "AV 03 MANZANA 12 EDIF PARCELA 292-012 PB LOCAL PB-3 SECTOR UNARE II" },
+      { rif: "J-409957527", nombre: "FARMAHUMANA C.A.", servicio: "FARMACIA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0424-9395837", dir: "CALLE 07 LOCAL MANZANA 04, PARCELA NRO 01-02 URB LOS SAMANES UD 266" },
+      { rif: "J-312459271", nombre: "ASOCIACION CIVIL SERVICIOS ODONTOLOGICOS ESPECIALIZADOS", servicio: "APS", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0286-9228323 / 0414-8530023", dir: "CALLE CHILE, EDIFICIO ANEXO CLINICA CHILEMEX, PISO 4 LOCAL 14 URB. CHILEMEX" },
+      { rif: "J-306381694", nombre: "CENTRO CLINICO LA FE, C.A", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD GUAYANA", telf: "0286-9310819", dir: "AV. RODRIGUEZ CABRILLO CASA NRO 05 URB GUAIPARO, SAN FELIX" },
+      { rif: "J-400347220", nombre: "CENTRO CLINICO SAN ANTONIO CARE, C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD GUAYANA", telf: "0424-9062394 / 0286-9613046", dir: "CR CACHAMAY C/C ARO CC BABILONIA MALL CENTER NIVEL MESANINA 2 LOCAL NIVEL 2 SECTOR ALTA VISTA" },
+      { rif: "J-296044945", nombre: "CENTRO CLINICO VILLA AFRICANA, C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0286-9717373 / 0286-9717509", dir: "CALLE VIA ITALIANA LOCAL PARCELA NO. 43,11 Y 12 URB LOS OLIVOS" },
+      { rif: "J-317359500", nombre: "CENTRO DE MEDICINA INTEGRAL MEDICAL SALUD, C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "UPATA", telf: "0288-2213008", dir: "AV RAUL LEONI, EDIF CENTRO EMPRESARIAL PESCARA, CORSO PISO 1, LOCAL 1-4, ZONA CENTRO UPATA" },
+      { rif: "J-309758209", nombre: "CENTRO HOSPITALARIO GUAYANA CA", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "SAN FELIX", telf: "0286-7122000", dir: "AV. GUAYANA C/C AV GUMILLA LOCAL CENTRO HOSPITALARIO GUAYANA LOCALES 1-2-3" },
+      { rif: "J-095049760", nombre: "CENTRO MEDICO ORINOCO C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD BOLIVAR", telf: "0424-9098901 / 0285-6328411", dir: "AV SIEGERT C/C INDEPENDENCIA EDIF CENTRO MEDICO ORINOCO PISO P/B LOCAL S/N SECTOR PLAZA" },
+      { rif: "J-400643791", nombre: "CENTRO MEDICO ORINOKIA C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0424-9148499 / 0414-7694918", dir: "CALLE 8 MANZANA 3 LOCAL PARCELA Nº 12 URB LOS SAMANES UD 266 I" },
+      { rif: "J-306951911", nombre: "CENTRO MEDICO QUIRURGICO CAICARA, C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CAICARA DEL ORINOCO", telf: "0284-6667792 / 0424-9544744", dir: "CALLE PRESENTACION GUERRERO, EDIF DON ANTONIO, PISO P/B, LOCAL S/N, SECTOR CENTRO URBANO" },
+      { rif: "J-310745676", nombre: "CENTRO OFTALMOLOGICO SALUD VISUAL, C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD BOLIVAR", telf: "0414-8936810", dir: "AV 17 DE DICIEMBRE, C/AV REPUBLICA CC SAMARA NIVEL PB, LOCAL 3, SECTOR CADA" },
+      { rif: "J-501398194", nombre: "CLINICA AMAZONIA, C.A", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0286-6003732", dir: "AV GUAYANA CC ORINOKIA MALL NIVEL TITANIO LOCAL NROS N-T 05-06 SECTOR ALTA VISTA" },
+      { rif: "J-305708924", nombre: "CLINICA CHILEMEX C.A.", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD BOLIVAR", telf: "0286-7132260 / 0286-7132301", dir: "CALLE CHILE C/C ANTILLA EDIF CEMCA PISO 1 OF PB URB CHILEMEX" },
+      { rif: "J-303433782", nombre: "CLINICA SAN PEDRO C.A", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "CIUDAD BOLIVAR", telf: "0285-6321118", dir: "AV MARIO BRICEÑO IRAGORRI C/C PASEO HERES LOCAL S/N SECTOR PASEO HERES" },
+      { rif: "J-300437213", nombre: "HOSPITAL DE CLINICAS CARONI C.A", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0286-9628626 / 0424-9259860", dir: "CALLE CHINA EDIF HOSPITAL DE CLINICAS CARONI PISO 1 URB VILLA ASIA" },
+      { rif: "J-305537712", nombre: "HOSPITAL DE CLINICAS DE CECIAMB CA", servicio: "CLINICA", estado: "BOLIVAR", ciudad: "PUERTO ORDAZ", telf: "0286-7120100", dir: "AV E CRUCE CON CALLE GUANIPA CC CCCD NIVEL PB LOCAL URB VILLA CARUSO" },
+
+      // CARABOBO (Clave para UPTPC)
+      { rif: "J-075081293", nombre: "CENTRO CLINICO LA ISABELICA CA", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-5132440 / 0414-9237356", dir: "AV 02 ESTE OESTE EDIF CENTRO CLINICO LA ISABELICA URB LA ISABELICA" },
+      { rif: "J-075030770", nombre: "CONSOLIDADA CIENTIFICA, CA", servicio: "FARMACIA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8237637 / 0241-8217152", dir: "CALLE 119 EDF RES. SEVERINO NO.104-351, PISO PB, LOCAL 01-02 URB AGUA BLANCA" },
+      { rif: "J-317272315", nombre: "FARMACIA INDUSTRIAL VALENCIA SUR C.A.", servicio: "FARMACIA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8325475 / 0241-8325572", dir: "AV. HENRY FORD, C.C. PASEO LAS INDUSTRIAS, 2DA. ETAPA, NIVEL MEZZANINA, LOCAL 118" },
+      { rif: "J-304902670", nombre: "LA GLORIA CENTRO CLINICO MATERNIDAD S.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "TOCUYITO", telf: "0241-8941281 / 0412-7545507", dir: "CALLE PRINCIPAL MANZANA 15 LOCAL EJIDO 08 URB POCATERRA, FRENTE AL IVSS" },
+      { rif: "J-309847090", nombre: "RADIOTERAPIA CABRIALES 21, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8578098 / 0241-8586440", dir: "AV MARTIN TOVAR EDIF 102-38/102.46 PISO PB LOCAL RADIOTERAPIA CABRIALES 21, ZONA CENTRO" },
+      { rif: "J-305375810", nombre: "CENTRO MEDICO LOS GUAYOS (ADMON 24 HORAS)", servicio: "CLINICA", estado: "CARABOBO", ciudad: "LOS GUAYOS", telf: "0241-8774641 / 0414-4272981", dir: "AV BOLIVAR CC NEGRO PRIMERO, EDF DON MIGUEL PB LOCAL 1 Y 2 SECTOR LOS GUAYOS" },
+      { rif: "V-207680938", nombre: "ANGELA DANIELA BERRIOS BERRIOS", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0414-4978785", dir: "AV JUAN JOSE FLORES, ENTRE CALLE 42 Y 43 EDIF LAS FLORES PISO PB LOCAL N 2 URB RANCHO GRANDE" },
+      { rif: "J-000129096", nombre: "CA ESCULAPIO (CENTRO MEDICO DR. RAFAEL GUERRA MENDEZ)", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0424-3263021 / 0414-3486086 / 0424-4529435", dir: "CALLE RONDON 103 CASA NRO 95-49 ZONA CASCO CENTRAL VALENCIA" },
+      { rif: "V-227420045", nombre: "CASTILLO BASALO KRYSLY BERNADETH", servicio: "APS", estado: "CARABOBO", ciudad: "MORON", telf: "0242-2051858 / 0414-5825537", dir: "AV YARACUY EDF DOÑA AURORA PISO 1 OFICINA 3 CASCO CENTRAL CRUCE CON CALLE MIRANDA" },
+      { rif: "J-409954498", nombre: "CENTRO CLINICO CMB 2017, C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0242-3611545 / 0412-1590206", dir: "CALLE URDANETA ESTE LOCAL NRO. 4A-70 SECTOR CASCO CENTRAL DE PUERTO CABELLO" },
+      { rif: "J-075475755", nombre: "CENTRO CLINICO FLOR AMARILLO, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8783635 / 0414-4306874", dir: "AV BOLIVAR CC PALO NEGRO PRIMERO, CENTRO CLINICO FLOR AMARILLO, NRO 93-40 URB. FLOR AMARILLO" },
+      { rif: "J-400511020", nombre: "CENTRO CLINICO GENESIS C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0242-3610500 / 0412-4698320", dir: "CALLE SUCRE LOCAL NRO 6-87 ZONA CASCO CENTRAL PUERTO CABELLO" },
+      { rif: "J-501965030", nombre: "CENTRO CLINICO MADRE CARMEN RENDILES, C.A", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0424-4337296", dir: "CALLE HENRY FORD CC PASEO LAS INDUSTRIAS NIVEL 2 LOCAL 2-107 Y 2-108 ZONA INDUSTRIAL" },
+      { rif: "J-305576858", nombre: "CENTRO CLINICO NAGUANAGUA, CA", servicio: "CLINICA", estado: "CARABOBO", ciudad: "NAGUANAGUA", telf: "0241-8663895 / 0412-1559945", dir: "FINAL AV. UNIVERSIDAD CALLE VALMORE RODRIGUEZ LOCAL NRO 10 SECTOR NAGUANAGUA" },
+      { rif: "J-501069689", nombre: "CENTRO CLINICO QUIRURGICO ARRECIFE C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0242-3610289 / 0412-9349689", dir: "CALLE GUEVARA EDIF GABA PISO 2 LOCAL 2 SECTOR CENTRO PUERTO CABELLO" },
+      { rif: "J-411375489", nombre: "CENTRO CLINICO SANTA ROSA, C.A", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8247255", dir: "CALLE 139 NRO 105-30 URB EL VIÑEDO" },
+      { rif: "J-501698392", nombre: "CENTRO DE DIAGNOSTICOS Y ESPECIALIDADES CISSO, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "LOS GUAYOS", telf: "0241-8774180", dir: "CALLE BRUZUAL PARCELA 1 LOCAL 001 SECTOR LOS GUAYOS" },
+      { rif: "J-304685386", nombre: "CENTRO DE ESPECIALIDADES PANAMERICANO C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "MORON", telf: "0242-3721559 / 0242-3722804", dir: "CTRA NACIONAL MORON SAN FELIPE EDIF CENTRO DE ESPECIALIDADES PANAMERICANO PB URB COLINA DE MARIA II" },
+      { rif: "J-314403818", nombre: "CENTRO MEDICO SAN FRANCISCO DE ASIS, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8582595 / 0241-8584996", dir: "CALLE COLOMBIA ENTRE AV 5 DE JULIO Y AV MARTIN TOVAR LOCAL NRO 95-43 SECTOR CENTRO" },
+      { rif: "J-311526951", nombre: "CENTRO MEDICO VALLE DE SAN DIEGO, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-3000300", dir: "AV INTERCOMUNAL DON JULIO CENTENO COLECTORA 11 ENTRE EL MORRO II Y LA ESMERALDA" },
+      { rif: "J-501243522", nombre: "CLINICA AVEMARIA C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0414-9482118 / 0424-4178844", dir: "CALLE 89 NUMERO CIVICO 91-46 LOCAL NRO S/N URB MICHELENA VALENCIA" },
+      { rif: "J-311797645", nombre: "CLINICA DOCENTE LOS JARALES, CA", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0414-4166874 / 0241-8760843", dir: "AV EL PARQUE CRUCE CON ARTERIAL 31 EDIF CLINICA DOCENTE LOS JARALES PB-1-2 URB LOS JARALES" },
+      { rif: "J-075905709", nombre: "CLINICA DR. AMAURI RENGEL, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8226865 / 0424-4468603", dir: "CALLE LOPEZ LATOUCHE, LOCAL NRO 100-157 URB. LAS ACACIAS" },
+      { rif: "J-075062086", nombre: "CLINICA GUERRA MAS C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0412-5005491 / 0242-3611222", dir: "CALLE SANTA BARBARA C/C MIRANDA EDIF GUERRA MAS PISO PB ZONA CASCO CENTRAL DE PUERTO CABELLO" },
+      { rif: "J-075082583", nombre: "CLINICA LOS COLORADOS CA", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-6176255", dir: "CALLE 111 LOCAL 103-120 URB LOS COLORADOS" },
+      { rif: "J-315073846", nombre: "CLINICA OFTALMOLOGICA EL VIÑEDO C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-4525600", dir: "AV 105 ANDRES ELOY BLANCO CRUCE CON CALLE 139 CASA NRO 104-162 URB EL VIÑEDO" },
+      { rif: "J-506530414", nombre: "EMERGENCIA MEDICA INMEDIATA 24/7 C.A", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0412-1044132", dir: "CALLE BARBULA EDIF. RUSEY ANEXO A SECTOR CENTRO PUERTO CABELLO" },
+      { rif: "J-500389477", nombre: "ERGOVITAL 2020, C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0424-4535607", dir: "AV. 136 Y 137 CC LA GALERIA NIVEL 2, LOCAL 2F1 A 2F4 URB CAMORUCO" },
+      { rif: "J-406184730", nombre: "ETC ESPECIALIDADES TRAUMATOLOGICAS DEL CENTRO, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-7000000", dir: "AV. 104 N° CIVICO 142-2, MANZANA X PARCELA NRO 695 URB LA VIÑA, SECTOR LA VICTORIA" },
+      { rif: "J-401852157", nombre: "G. TOTAL SALUD, C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0414-4556252 / 0424-4563908", dir: "AV INDUSTRIAL CENTRO COMERCIAL SAVE LOCAL Nº 09 INDUSTRIAL LA ISABELICA" },
+      { rif: "J-309969714", nombre: "HOSPITAL DE CLINICAS SAN AGUSTIN PTO. CABELLO, C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0242-5583119", dir: "AV. JUAN JOSE FLORES C/C RONDON QTA CASICIACO PTO CABELLO" },
+      { rif: "J-501194742", nombre: "IMED C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "MORON", telf: "0424-5783359", dir: "CALLE PRINCIPAL CC MADECO BOULEVARD DE MORON NIVEL P-A" },
+      { rif: "J-304354940", nombre: "INSTITUTO DE ESPECIALIDADES QUIRURGICAS LOS MANGOS, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-6136600", dir: "CALLE 110 NRO 111-81 EDF IEQ LOS MANGOS PB" },
+      { rif: "J-308464856", nombre: "INTEGRA VALENCIA SERVICIOS MEDICOS C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0412-3835639", dir: "AV 97 PASEO CABRIALES EDIF TORRE MOVILNET PISO MEZZANINA OF M-6 URB KERDELL" },
+      { rif: "J-504646687", nombre: "INTERNATIONAL MEDICAL TECNOLOGIES IMTEC, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0412-4638925 / 0412-0348814", dir: "AV PASEO CABRIALES, TORRE MOVILNET, PISO 2 OFC 9/10 URB KERDELL" },
+      { rif: "J-402075723", nombre: "OPTICA DIAZ VISION, C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0424-4726104", dir: "AV HENRY FORD CC PASEO LAS INDUSTRIAS 1ERA ETAPA NIVEL PB LOCAL PB 13" },
+      { rif: "J-312166533", nombre: "POLICLINICA CETVEN, CA", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-4147872", dir: "CALLE 139 NRO 104-132 URB EL VIÑEDO" },
+      { rif: "J-304257392", nombre: "POLICLINICA LAS INDUSTRIAS C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8785855 / 0241-8783176", dir: "AV BOLIVAR Nº 93-110 EDIF POLICLINICA LAS INDUSTRIAS PISO PB URB FLOR AMARILLO" },
+      { rif: "J-303058663", nombre: "POLICLINICA URDANETA C.A.", servicio: "CLINICA", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0412-1027038 / Noche: 0412-4124991", dir: "CALLE AYACUCHO C/C CORDOVA LOCAL POLICLINICA URDANETA Nº 01 SECTOR SAN MILLAN" },
+      { rif: "J-301824440", nombre: "POLICLINICAS ELOHIM VALENCIA, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-8399313 / 0414-4078076", dir: "AV ESTE OESTE LOCAL POLICLINICAS ELOHIM NRO 1-6 URB LA ISABELICA" },
+      { rif: "J-075396537", nombre: "POLICLINICO BEJUMA, C.A", servicio: "CLINICA", estado: "CARABOBO", ciudad: "BEJUMA", telf: "0249-7934477", dir: "CALLE AGUSTIN BETANCOURT EDF POLICLINICO BEJUMA PISO 5 URB EL ROCIO BELLORIN" },
+      { rif: "J-307128399", nombre: "PREVALER C.A. (VALENCIA)", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0241-7000000 / 0500-7738253 / 0424-4020751", dir: "AV. HENRY FORD CC CENTRO COMERCIAL INDUSTRIAL HENRY FORD NIVEL 1 LOCAL 1 ZONA INDUSTRIAL" },
+      { rif: "J-307128399-PC", nombre: "PREVALER C.A. (PUERTO CABELLO)", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0241-7000000 / 0424-4020751", dir: "CALLE MARIÑO, ENTRE LAS CALLES CARABOBO Y BARBULA" },
+      { rif: "V-69656184", nombre: "ROSA GASCUE MARCOU", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0414-5462169", dir: "AV 119 EDIF RESIDENCIAS 4 AVENIDA TORRE B PISO 13 APT 13-A URB SABANA LARGA" },
+      { rif: "J-500920350", nombre: "SERVICIOS EMMA 2021, C.A", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0412-5011696", dir: "CALLE 86 MANZANA O PARCELAMIENTO 05 Y 06 LOCAL 82-A-30 ZONA CENTRO INDUSTRIAL EL PROGRESO" },
+      { rif: "J-402570139", nombre: "SERVICIOS INTEGRALES DE SALUD (SISCA) C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "MORON", telf: "0412-0971333", dir: "AV PRINCIPAL, EDIF DON JOSE, PISO 1, LOCAL 20, URB COLINAS DE MARA II" },
+      { rif: "J-314867571", nombre: "SUMILUM C.A.", servicio: "FARMACIA", estado: "CARABOBO", ciudad: "NAGUANAGUA", telf: "0416-6412766", dir: "AV TORRE F EDIF RESD VALLE FRESCO III PISO 3 APT 3-3 URB LA GRANJA" },
+      { rif: "J-297323341", nombre: "UNIDAD MEDICO LABORAL N.C. C.A.", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0424-1725626 / 0242-3621421", dir: "CALLE AYACUCHO/BARBULA Y JUNIN EDIF HOSP CLIN SOC PISO PB LOCAL PB ZONA CASCO CENTRAL" },
+      { rif: "V-038980897-PC", nombre: "DRA. XIOMARA ARTEAGA (PUERTO CABELLO)", servicio: "APS", estado: "CARABOBO", ciudad: "PUERTO CABELLO", telf: "0412-4231950", dir: "URB. RANCHO GRANDE AV. JUAN JOSE FLORES CENTRO CLINICO DEL CARIBE CONSULTORIO 16" },
+      { rif: "V-038980897-VAL", nombre: "DRA. XIOMARA ARTEAGA (VALENCIA)", servicio: "APS", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0412-4231950", dir: "CONDOMINIO MONTECERIBO SAN DIEGO CALLE CASA 27-114 VALENCIA" },
+      { rif: "J-406283924", nombre: "SOCIEDAD CIVIL IDUCARDIO PACHAS-MARTINEZ", servicio: "CLINICA", estado: "CARABOBO", ciudad: "VALENCIA", telf: "0412-4028745 / 0241-8240843", dir: "CALLE 152 CRUCE CON AV 104 (AV CARABOBO) EDF INST DOC DE UROLOGIA PISO 2 URB LA VIÑA" },
+
+      // COJEDES
+      { rif: "J-310326134", nombre: "C.M.Q. SANTA ANA, C.A.", servicio: "CLINICA", estado: "COJEDES", ciudad: "TINAQUILLO", telf: "0414-5975373", dir: "CALLE COHAERI CASA Nº K-14 URB TAMANACO TINAQUILLO" },
+      { rif: "J-408433940", nombre: "CENTRO MEDICO QUIRURGICO FERNANDEZ & RODRIGUEZ, C.A", servicio: "CLINICA", estado: "COJEDES", ciudad: "SAN CARLOS", telf: "0258-4333394", dir: "AV CARACAS ENTRE CALLES INDEPENDENCIA Y VARGAS, EDIF 12-74 PB LOCAL UNICO" },
+      { rif: "J-295645228", nombre: "CLINICA QUIRURGICA JESUS DE NAZARET CA", servicio: "CLINICA", estado: "COJEDES", ciudad: "SAN CARLOS", telf: "0424-4048691", dir: "AV BOLIVAR EDIF JESUS DE NAZARET 17-62, LOCAL UNICO, ZONA CENTRO" },
+      { rif: "J-305557063", nombre: "HOSPITAL CLINICA COJEDES C.A.", servicio: "CLINICA", estado: "COJEDES", ciudad: "TINAQUILLO", telf: "0258-7665319", dir: "CALLE PAEZ ENTRE AV BOLIVAR Y PRINCIPAL EDIF HOSPITAL CLINICA COJEDES PISO PB" },
+      { rif: "J-311065822", nombre: "CLIMMCA C.A (CLINICA MADRE MARIA)", servicio: "CLINICA", estado: "COJEDES", ciudad: "SAN CARLOS", telf: "0424-4465241 / 0424-4078480", dir: "CALLE ALEGRIA CASA NRO 13-63, SECTOR CENTRO" },
+
+      // DELTA AMACURO
+      { rif: "J-095055027", nombre: "CENTRO DE ESPECIALIDADES MEDICAS TUCUPITA, C.A. (CEMETCA)", servicio: "CLINICA", estado: "DELTA AMACURO", ciudad: "TUCUPITA", telf: "0412-0853473 / 0424-9076119", dir: "CALLE JUNIN, CASA S/N, URB LEONARDO RUIZ PINEDA TUCUPITA" },
+      { rif: "J-095107116", nombre: "POLICLINICA DELTA C.A.", servicio: "CLINICA", estado: "DELTA AMACURO", ciudad: "TUCUPITA", telf: "0287-7210277", dir: "AV GUASIMA CON JACINTO LARA EDIF PODELCA PISO 1 OF 1 URB LEONARDO RUIZ PINEDA" },
+
+      // DISTRITO CAPITAL (CARACAS)
+      { rif: "J-307506253", nombre: "A.C CLINICA DISPENSARIO PADRE MACHADO", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-4435143", dir: "AV THERAN EDIF CLINICA DISPENSARIO PADRE MACHADO PISO 3 URB MONTALBAN II, LA VEGA" },
+      { rif: "J-506820838", nombre: "ATENCION A SU SALUD MEDICA, ANSUMED, C.A", servicio: "APS", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-9106313 / 0412-5911099", dir: "AV LIBERTADOR CENTRO COMERCIAL AVENIDA LIBERTADOR NIVEL 1 OFIC 1-07 LA FLORIDA" },
+      { rif: "J-305525650", nombre: "CENTRO OFTALMOLOGICO EL PARAISO CEOPAR, C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-4627343 / 0212-4611380", dir: "AV JOSE ANTONIO PAEZ EDIF. CENTRO PROFESIONAL PARAISO PB LOCAL 3 URB. EL PARAISO" },
+      { rif: "J-316455670", nombre: "FARMACIA PLAZA BOLIVAR, C.A.", servicio: "FARMACIA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-8625899 / 0212-8622699", dir: "ESQ CONDE EDIF LA PREVISORA PB LOCAL 1 URB EL SILENCIO CARACAS" },
+      { rif: "J-294285694", nombre: "FARMACIA RALSU C.A.", servicio: "FARMACIA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-4721480", dir: "CALLE 3 EDIF. LIBERTADOR, PB, OFIC. E Y F, URB. VISTA ALEGRE" },
+      { rif: "J-501736170", nombre: "INVERSIONES FARMACEUTICAS LA FAMILIA, C.A", servicio: "FARMACIA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-7621682", dir: "AV SOLANO LOPEZ, ENTRE CALLE EL CRISTO Y AV LOS MANGUITOS EDF DURI PB LOCAL 3" },
+      { rif: "J-296559104", nombre: "SERVICIOS ONCORAD, C.A. (CHAGUARAMOS)", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-6623701", dir: "AV. NEVERI LOS CHAGUARAMOS, C.C LOS CHAGUARAMOS, PB, LOCAL 9" },
+      { rif: "J-296559104-SB", nombre: "SERVICIOS ONCORAD, C.A. (SAN BERNARDINO)", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-6623701", dir: "AV ANAUCO EDIF INSTITUTO DIAGNOSTICO PB OFIC 105, URB. SAN BERNARDINO" },
+      { rif: "J-311768203", nombre: "UNIDAD DE QUIMIOTERAPIA BRICEÑO ROSSI, C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5071740", dir: "AV. ESTE 2 ENTRE SUR 21 Y SUR 23 EDIF CLINICA DR. A.L. BRICEÑO ROSSI PISO 4 URB LA CANDELARIA" },
+      { rif: "J-502185640", nombre: "(DOCTORMAS) CAMIS, CA", servicio: "APS", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-7719037", dir: "AV. SANTOS ERMINY, EDF. TECHO PB LOCAL 1-A SABANA GRANDE" },
+      { rif: "J-313632430", nombre: "ADMINISTRADORA HUMANA C.A.", servicio: "APS", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5830286 / 0412-7230197", dir: "AV. UNIVERSIDAD ESQ. EL CHORRO A TRAPOSOS EDIF TORRE EMPRESARIAL PISO 17" },
+      { rif: "J-001207228", nombre: "ALFREDO HERRERA LYNCH S.C.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5528421", dir: "AV JORGE WASHINGTON CRUCE CON AV. M. MONTILLA QTA RUTH URB SAN BERNARDINO" },
+      { rif: "J-000188777", nombre: "C.A HOSPITALIZACION INSTITUTO DIAGNOSTICO", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0424-1827487 / 0212-5551294", dir: "CALLE ANAUCO EDIF INSTITUTO DIAGNOSTICO PISO 6 URB SAN BERNARDINO" },
+      { rif: "J-299290548", nombre: "CENTRO CLINICO FENIX SALUD C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0500-FENIX / 0212-5526831", dir: "AV GUACAIPURO ENTRE AV PANTEON Y PARAMACONI EDIF AUYANTEPUY PB URB SAN BERNARDINO" },
+      { rif: "J-302296730", nombre: "CENTRO DE ATENCION MEDICO QUIRURGICA - VIDAMED", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-7069411 Ext 3157", dir: "AV FRANCISCO SOLANO LOPEZ EDIF MADRID PISO PB SECTOR SABANA GRANDE" },
+      { rif: "J-001168281", nombre: "CENTRO MEDICO LOIRA C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-4052137", dir: "AV LOIRA EDIF CENTRO MEDICO LOIRA PISO 1 URB LOIRA EL PARAISO" },
+      { rif: "J-001696091", nombre: "CLINICA ATIAS HOSPITALIZACION Y SERVICIOS, C.A", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-6033333", dir: "AV. ROOSEVELT, EDIFICIO CLINICA ATIAS, URBANIZACIÓN LOS ROSALES" },
+      { rif: "J-003105813", nombre: "CLINICA CEMO, C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0424-1326307 / 0212-6934554", dir: "AV. ARTURO MICHELENA, EDF CEMO PB URB. SANTA MÓNICA" },
+      { rif: "J-298832223", nombre: "CLINICA LOS SAUCES C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5503484 / 0212-5501367", dir: "CALLE MARISCAL SUCRE ENTRE PARAMACONI Y PROCERES URB SAN BERNARDINO" },
+      { rif: "J-000237930", nombre: "CLINICA SANTIAGO DE LEON C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-3081900 / 0412-2297781", dir: "AV LIBERTADOR ENTRE CALLE NEGRIN Y LAS DELICIAS PB URB SABANA GRANDE" },
+      { rif: "J-000680027", nombre: "CLINICA VISTA ALEGRE C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0424-1310442", dir: "CALLE 3 ENTRE CALLE 5 Y AV USLAR EDIF CLINICA VISTA ALEGRE URB VISTA ALEGRE" },
+      { rif: "J-001074945", nombre: "HOSPITAL DE CLINICAS CARACAS, C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5086111", dir: "AV PANTEON CON AV ALAMEDA EDF HOSPITAL DE CLINICAS CARACAS PB URB SAN BERNARDINO" },
+      { rif: "J-001688706", nombre: "FUNDACION HOSPITAL ORTOPEDICO INFANTIL", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5094401 / 0212-3084411", dir: "AV ANDRES BELLO EDIF FUNDACION HOSPITAL ORTOPEDICO INFANTIL PB URB GUAICAIPURO" },
+      { rif: "J-000297878", nombre: "POLICLINICA LA ARBOLEDA C.A.", servicio: "CLINICA", estado: "DISTRITO CAPITAL", ciudad: "CARACAS", telf: "0212-5550359 / 0416-6159867", dir: "AV CAJIGAL CON AV PANTEON EDIF POLICLINICA ARBOLEDA URB SAN BERNARDINO" },
+
+      // FALCON
+      { rif: "J-070020415", nombre: "CENTRO MEDICO CARDON, C.A", servicio: "CLINICA", estado: "FALCON", ciudad: "PUNTO FIJO", telf: "0412-7227366 / 0412-2660705", dir: "AV. 1 EDF. CENTRO MEDICO CARDON PB LOCAL 1 URB. ZARABON PUNTA CARDON" },
+      { rif: "J-299956287", nombre: "CENTRO MEDICO DIAGNOSTICO LOS ORUMOS CA", servicio: "CLINICA", estado: "FALCON", ciudad: "CORO", telf: "0412-0651686 / 0414-6213820", dir: "AV. LOS ORUMOS EDIF CMD LOS ORUMOS PISO PB SECTOR SAN BOSCO SANTA ANA DE CORO" },
+      { rif: "J-502469346", nombre: "POLICLINICO VIRGEN DEL CARMEN TUCACAS, C.A.", servicio: "CLINICA", estado: "FALCON", ciudad: "TUCACAS", telf: "0412-0372342", dir: "AV HUGO CHAVEZ EDIF ARJUS LOCAL S/N SECTOR KM 3 VÍA LAS LAPAS TUCACAS" },
+      { rif: "J-307883077", nombre: "CENTRO CLINICO FALCON, C.A", servicio: "CLINICA", estado: "FALCON", ciudad: "TUCACAS", telf: "0414-4018504 / 0412-7534924", dir: "CALLE PAEZ EDIF ALEJANDREROS PISO 01 APT 01 SECTOR CENTRO, TUCACAS" },
+      { rif: "J-409865762", nombre: "CENTRO MEDICO INTEGRAL RGC, C.A.", servicio: "CLINICA", estado: "FALCON", ciudad: "PUNTO FIJO", telf: "0269-2478591 / 0424-6035805", dir: "CALLE PROLONGACIÓN PROGRESO EDF. FLEPACA PB URB. SANTA IRENE" },
+      { rif: "J-304998503", nombre: "CENTRO PEDIATRICO FALCON, C.A.", servicio: "CLINICA", estado: "FALCON", ciudad: "CORO", telf: "0268-2517827 / 0412-1230287", dir: "AV LOS MEDANOS CON CALLE NORTE EDIF CENTRO PEDIATRICO FALCON SECTOR LOS MEDANOS" },
+      { rif: "J-085075151", nombre: "POLICLINICA PARAGUANA, C.A", servicio: "CLINICA", estado: "FALCON", ciudad: "PUNTO FIJO", telf: "0269-2509482 / 0412-6691453", dir: "CALLE COMERCIO EDIF POLICLINICA PARAGUANA PB SECTOR CAJA DE AGUA" },
+
+      // GUARICO
+      { rif: "J-060048028", nombre: "CENTRO MEDICO ORITUCO CA", servicio: "CLINICA", estado: "GUARICO", ciudad: "ALTAGRACIA DE ORITUCO", telf: "0238-3341020", dir: "CARRETERA NACIONAL VIA ORIENTE EDF CENTRO MEDICO ORITUCO PB SECTOR LA ALCABALA" },
+      { rif: "J-308547530", nombre: "CLINICA PEREZ GUILLEN, CA.", servicio: "CLINICA", estado: "GUARICO", ciudad: "CALABOZO", telf: "0424-1418740 / 0424-3334714", dir: "CALLE 6 ENTR CARRERAS 13 Y 14 LOCAL S/N SECTOR CASCO CENTRAL" },
+      { rif: "J-060020255", nombre: "POLICLINICA DEL LLANO, C.A", servicio: "CLINICA", estado: "GUARICO", ciudad: "ALTAGRACIA DE ORITUCO", telf: "0238-3343382 / 0424-3107121", dir: "CALLE BOLIVAR C/C ADOLFO CHATAING NRO 11 SECTOR CASCO CENTRAL" },
+      { rif: "J-308183091", nombre: "SANTA ROSALIA UNIDAD DE EMERGENCIAS MEDICAS, C.A.", servicio: "CLINICA", estado: "GUARICO", ciudad: "SAN JUAN DE LOS MORROS", telf: "0246-4318453 / 0246-4321112", dir: "CALLE GUAIQUERA EDIF LLANO ALTO PISO P/B URB LA TROPICAL" },
+      { rif: "J-060012716", nombre: "POLICLINICA SAN JUAN C.A", servicio: "CLINICA", estado: "GUARICO", ciudad: "SAN JUAN DE LOS MORROS", telf: "0246-4329860", dir: "CALLE ARAURE Y GIRARDOT EDIF POLICLINICA SAN JUAN PISO PB URB LOS LAURELES" },
+
+      // LA GUAIRA
+      { rif: "J-507492052", nombre: "CENTRO MEDICO ASSIST CARE, C.A", servicio: "APS", estado: "LA GUAIRA", ciudad: "CATIA LA MAR", telf: "0424-1282158", dir: "CALLE 3 EDIF AMAURY PISO 2 OFIC 2E URB LA ATLANTIDA" },
+      { rif: "J-305411182", nombre: "CENTRO CLINICO PEDIATRICO GLAMAR, C.A.", servicio: "CLINICA", estado: "LA GUAIRA", ciudad: "CATIA LA MAR", telf: "0212-2302488", dir: "AV. ALAMO EDIF CENTRO CLINICO PEDIATRICO GLAMAR PISO PB URB ALAMO MACUTO" },
+      { rif: "J-305041288", nombre: "CLINICA ALFA, C.A.", servicio: "CLINICA", estado: "LA GUAIRA", ciudad: "MAIQUETIA", telf: "0212-8190756", dir: "CALLE MARE, ESQ. PLAZA ESPAÑA, EDIF ALFA, PISO 06 FRENTE A PLAZA LOS MAESTROS" },
+      { rif: "J-503340932", nombre: "FARMAHOGAR PLUS, C.A", servicio: "FARMACIA", estado: "LA GUAIRA", ciudad: "MACUTO", telf: "0412-2706583", dir: "AV LA PLAYA, LOCAL ESTADIO JOSE LUIS GARCIA CARNEIRO PB NRO 17 Y 16" },
+      { rif: "J-316633160", nombre: "INSTITUTO DE MICROCIRUGIA OCULAR J.M.VARGAS, C.A", servicio: "CLINICA", estado: "LA GUAIRA", ciudad: "LA GUAIRA", telf: "0212-7167315", dir: "AV SOUBLETTE EDF SAYEGH PISO 01 OFC 01 URB MAIQUETIA" },
+      { rif: "J-306608737", nombre: "UNIDAD QUIRURGICA SAN ANTONIO, C.A.", servicio: "CLINICA", estado: "LA GUAIRA", ciudad: "CATIA LA MAR", telf: "0414-2244231 / 0212-3521669", dir: "CALLE LA LINEA QTA LADYS Nº 1 URB WEEKEND" },
+
+      // LARA
+      { rif: "J-502250816", nombre: "CENTRO CLINICO BUENA VIDA, C.A", servicio: "CLINICA", estado: "LARA", ciudad: "BARQUISIMETO", telf: "0251-4422128 / 0424-5698547", dir: "CR 14B ENTRE CALLE 58 Y 59 CASA CENTRO CLINICO BUENA VIDA ZONA OESTE" },
+      { rif: "J-505673564", nombre: "CENTRO MEDICO BUENA VIDA, C.A.", servicio: "CLINICA", estado: "LARA", ciudad: "BARQUISIMETO", telf: "0251-4422128 / 0412-0120203", dir: "AV FLORENCIO JIMENEZ ENTRE CALLE 5 Y CRR 01 BARRIO CERRITO BLANCO" },
+      { rif: "J-303063845", nombre: "CLINICA IDET BARQUISIMETO C.A", servicio: "CLINICA", estado: "LARA", ciudad: "BARQUISIMETO", telf: "0414-4205919 / 0251-4454036", dir: "CARRERA 16, ENTRE CALLES 43 Y 44, EDIF IDET PB, LOCAL A SECTOR CENTRO" },
+      { rif: "J-085111905", nombre: "POLICLINICA CABUDARE CA", servicio: "CLINICA", estado: "LARA", ciudad: "CABUDARE", telf: "0251-7107949 / 0414-5151291", dir: "CALLE VICENTE AMENGUAL CON GUILLERMO ALVISU EDF CLINICA CABUDARE" },
+      { rif: "J-303056911", nombre: "CENTRO MEDICO SAN FRANCISCO, CA", servicio: "CLINICA", estado: "LARA", ciudad: "BARQUISIMETO", telf: "0424-5841064", dir: "CALLE 15 ENTRE CARRERAS 22 Y 23 EDFI 22-50, ZONA ESTE" },
+      { rif: "J-501169144-LARA", nombre: "FARMACIA NUEVA FE, C.A", servicio: "FARMACIA", estado: "LARA", ciudad: "BARQUISIMETO", telf: "0412-0277059", dir: "CARRERA 25 CON ESQUINA DE LA CALLE 46 LOCAL 03 ZONA CENTRO" },
+
+      // MERIDA
+      { rif: "J-090390154", nombre: "CLINICA ROA, C.A", servicio: "CLINICA", estado: "MERIDA", ciudad: "TOVAR", telf: "0275-8733158 / 0424-7355454", dir: "AV 5 CON CALLE 5 EDF CLINICA ROA PB SECTOR COROZO, TOVAR" },
+      { rif: "J-311808639", nombre: "CLINISALUD MEDICINA PREPAGADA, S.A.", servicio: "CLINICA", estado: "MERIDA", ciudad: "MERIDA", telf: "0274-2510092", dir: "CALLE 25, ENTRE AV. 7 Y 8 MERIDA" },
+      { rif: "J-305433895", nombre: "HOSPITAL CLINICO DE MERIDA, C.A.", servicio: "CLINICA", estado: "MERIDA", ciudad: "MERIDA", telf: "0274-2713312 / 0414-1791366", dir: "AV. ANDRES BELLO ENTRE URB CARRIZAL A Y ALTO CHAMA EDIF HOSPITAL CLINICO MERIDA" },
+      { rif: "J-400436800", nombre: "HOSPITAL CLINICO DEL VALLE, C.A.", servicio: "CLINICA", estado: "MERIDA", ciudad: "MERIDA", telf: "0274-2631006 / 0414-9764302", dir: "AV. GONZALO PICON EDIFICIO HOSPITAL CLINICO DEL VALLE FRENTE A PARQUE DE LAS MADRES" },
+      { rif: "J-308786730", nombre: "VIDA SALUD C.A", servicio: "CLINICA", estado: "MERIDA", ciudad: "EL VIGIA", telf: "0275-8813884 / 0424-7519429", dir: "AV 14 ENTRE CALLE 9 Y 10 CASA NRO 9-67 SECTOR LA INMACULADA, EL VIGIA" },
+
+      // MIRANDA
+      { rif: "J-400188741", nombre: "CENTRO INTEGRAL SONRISAS LA CANDELARIA C.A.", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CHARALLAVE", telf: "0412-7669027 / 0422-7660013", dir: "CALLE SANTA ANA ENTRE AV TOSTA GARCIA Y BOLIVAR EDIF CENTRO MEDICO LA CANDELARIA PB" },
+      { rif: "J-309094327", nombre: "CENTRO DIAGNOSTICO DOCENTE LAS MERCEDES, C.A", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0212-9181000", dir: "CALLE PARIS CON CARONI, LOCAL CDD, URB LAS MERCEDES" },
+      { rif: "J-301897064", nombre: "CENTRO MEDICO DOCENTE EL PASO, C.A.", servicio: "CLINICA", estado: "MIRANDA", ciudad: "LOS TEQUES", telf: "0212-7005322 / 0212-7005024", dir: "AV GUAICAIPURO CENTRO MEDICO DOCENTE EL PASO PB URB PUNTA BRAVA" },
+      { rif: "J-000683778", nombre: "CLINICA SANTA SOFIA (GRUPO MEDICO VARGAS)", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0212-3355050", dir: "AV. PPAL SANTA SOFIA, EDF CLINICA SANTA SOFIA PB, URB SANTA SOFIA (EL CAFETAL)" },
+      { rif: "J-505670603", nombre: "SEMES SEGOVIA, C.A", servicio: "APS", estado: "MIRANDA", ciudad: "CHARALLAVE", telf: "0414-9186153 / 0412-4203250", dir: "AV BOLIVAR EDF TRIPLE A PISO 1 LOCAL 2, SECTOR PUEBLO ABAJO" },
+      { rif: "J-313734578", nombre: "ADMINISTRADORA PAZ MIRANDA CA", servicio: "CLINICA", estado: "MIRANDA", ciudad: "LOS TEQUES", telf: "0212-3281170 / 0212-3219313", dir: "CALLE JUNIN EDF CENTRO MEDICO LA PAZ SECTOR CENTRO DE LOS TEQUES" },
+      { rif: "J-001307001", nombre: "BANCO DE DROGAS ANTINEOPLASICAS BADAN", servicio: "FARMACIA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0212-4000507", dir: "AV PRINCIPAL DE LOS CORTIJOS DE LOURDES EDIF CENTRO LOS CORTIJOS PISO 2 OF 26" },
+      { rif: "J-302147077", nombre: "CENTRO CLINICO LA CARLOTA C.A", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0414-3292078 / 0212-2341150", dir: "AV. B LOCAL CASA N B-16 N 11-03 URB LA CARLOTA" },
+      { rif: "J-300592847", nombre: "CENTRO MEDICO DOCENTE LOS ALTOS MEDO, C.A", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARRIZAL", telf: "0212-3836111", dir: "AV PPAL COLINA DE CARRIZAL EDF CENTRO MEDICO DOCENTE LOS ALTOS PB SECTOR MONTAÑA ALTA" },
+      { rif: "J-300112179", nombre: "CENTRO MEDICO HOSPITAL SAN MARTIN DE PORRES", servicio: "CLINICA", estado: "MIRANDA", ciudad: "GUATIRE", telf: "0212-3419922", dir: "AV. VILLA HEROICA EDF CRUMA URB LA PALOMERA, GUATIRE" },
+      { rif: "J-302157455", nombre: "CENTRO MEDICO OFTALMOLOGICO MEDIC-OPTI DEL TUY", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CUA", telf: "0239-2121246 / 0422-6000020", dir: "AV SAN JOSE CON CALLE LA GRUTA, CC ITALVEN LOCAL 6 PB CASCO CENTRAL" },
+      { rif: "J-002248246", nombre: "CENTRO OFTALMODIAGNOSTICO DEL ESTE, C.A", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0412-6033135", dir: "AV VENEZUELA EDIF POLICLINICA AMERICANA PISO 1 URB EL ROSAL" },
+      { rif: "J-000121311", nombre: "INSTITUTO MEDICO LA FLORESTA", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0212-2096222 / 0212-2096481", dir: "AV PRINCIPAL LA FLORESTA CON CALLE SANTA ANA EDIF IMLF PB URB LA FLORESTA" },
+      { rif: "J-002943157", nombre: "CENTRO MEDICO PASO REAL", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CHARALLAVE", telf: "0239-5009500", dir: "CTRA. AUTOPISTA OCUMARE DEL TUY CHARALLAVE, EDIF CENTRO MEDICO PASO REAL" },
+      { rif: "J-000069310", nombre: "CLINICA SANATRIX, C.A.", servicio: "CLINICA", estado: "MIRANDA", ciudad: "CARACAS", telf: "0212-2016255 / 0212-2016655", dir: "AV 4A AV CON 2DA CALLE EDIF HIGEA PISO PB LOCAL PB URB CAMPO ALEGRE" },
+
+      // MONAGAS
+      { rif: "J-303054412", nombre: "CENTRO CLINICO LA PIRAMIDE, C.A.", servicio: "CLINICA", estado: "MONAGAS", ciudad: "MATURIN", telf: "0291-6435159", dir: "AV LUIS DEL VALLE GARCIA, EDIF LA PIRAMIDE PISO 1 Y 2 SECTOR LAS AVENIDAS" },
+      { rif: "J-313811777", nombre: "CENTRO MEDICO ORIENTAL DE SALUD CEMOS, C.A.", servicio: "CLINICA", estado: "MONAGAS", ciudad: "MATURIN", telf: "0414-8501066 / 0426-7903329", dir: "AV LUIS DEL VALLE GARCIA CASA CEMOS NRO 90 SECTOR LAS AVENIDAS" },
+      { rif: "J-304952430", nombre: "HOSPITAL METROPOLITANO MATURIN C.A.", servicio: "CLINICA", estado: "MONAGAS", ciudad: "MATURIN", telf: "0291-6519255 / 0414-5941474", dir: "AV. BELLA VISTA CRUCE CON CRUZ PEREZA EDF HOSPITAL METROPOLITANO MATURIN" },
+      { rif: "J-304164866", nombre: "INSTITUTO DE SALUD Y ATENCION INTEGRAL (ISAMICA)", servicio: "CLINICA", estado: "MONAGAS", ciudad: "MATURIN", telf: "0291-6437929 / 0291-6423594", dir: "AV LA PAZ CASA NRO 54-52 SECTOR LAS AVENIDAS" },
+
+      // NUEVA ESPARTA
+      { rif: "J-412250361", nombre: "FARMACIA LA IGUALDAD, C.A.", servicio: "FARMACIA", estado: "NUEVA ESPARTA", ciudad: "PORLAMAR", telf: "0412-3885574", dir: "CALLE IGUALDAD ENTRE LIBERTAD Y ARISMENDI LOCAL NRO S/N SECTOR CENTRO" },
+      { rif: "J-297744878", nombre: "CENTRO CLINICO DEL CARIBE, C.A.", servicio: "CLINICA", estado: "NUEVA ESPARTA", ciudad: "PORLAMAR", telf: "0412-3563211", dir: "AV FRANCISCO ESTEBAN GOMEZ CC EL PARQUE EDIF CENTRO CLINICO DEL CARIBE" },
+      { rif: "J-310171858", nombre: "CENTRO MEDICO EL VALLE, C.A.", servicio: "CLINICA", estado: "NUEVA ESPARTA", ciudad: "EL VALLE", telf: "0412-8408853", dir: "AV RAFAEL TOVAR EL VALLE DEL ESPIRITU SANTO SECTOR CONUCO LARGO" },
+      { rif: "J-402156600", nombre: "HOSPITAL CLINICAS DEL ESTE, S.C.", servicio: "CLINICA", estado: "NUEVA ESPARTA", ciudad: "LOS ROBLES", telf: "0412-3534134 / 0412-6154678", dir: "AV. LA AUYAMA EDIF HOSPITAL CLINICAS DEL ESTE PISO 1 SECTOR LA OTRA BANDA" },
+
+      // PORTUGUESA
+      { rif: "J-504566845", nombre: "CENTRO CLINICO MEVCON, C.A", servicio: "CLINICA", estado: "PORTUGUESA", ciudad: "ARAURE", telf: "0412-7449493", dir: "CALLE 4 ENTRE AVENIDAS 8 Y 9 NRO 8-46 SECTOR CENTRO VILLA BRUZUAL" },
+      { rif: "J-401837999", nombre: "CLINICA DE ESPECIALIDADES QUIRURGICAS ARAURE, C.A", servicio: "CLINICA", estado: "PORTUGUESA", ciudad: "ARAURE", telf: "0255-6651688 / 0416-3685768", dir: "AV 23 ENTRE CALLES 7 Y 8 QTA. CLINICA DE ESPECIALIDADES QUIRURGICAS ARAURE" },
+      { rif: "J-500794223", nombre: "GRUPO CLINICO MEVCON, C.A.", servicio: "CLINICA", estado: "PORTUGUESA", ciudad: "ACARIGUA", telf: "0424-5630252", dir: "AV. 32 ENTRE CALLES 32 Y 33 QTA LAS CELEMENCIAS NRO. 32 BARRIO COLOMBIA" },
+
+      // SUCRE
+      { rif: "J-501902828", nombre: "ATENCION FAMILIAR MEDICO INTEGRAL (AFMI), C.A.", servicio: "APS", estado: "SUCRE", ciudad: "CUMANA", telf: "0293-4322586", dir: "CALLE BOMPLANT CON 4TA TRANSVERSAL DE LA AV GRAN MARISCAL LOCAL 01" },
+      { rif: "J-310633622", nombre: "CENTRO CLINICO PUNTA DEL ESTE, C.A", servicio: "CLINICA", estado: "SUCRE", ciudad: "CUMANA", telf: "0424-8249156", dir: "AV CARUPANO EDIF PRUDECA PISO PB LOCAL UNICO ZONA VIA EL PEÑON" },
+      { rif: "J-303077234", nombre: "CLINICA BELLO MONTE, C.A", servicio: "CLINICA", estado: "SUCRE", ciudad: "CARUPANO", telf: "0412-6975813 / 0294-3325538", dir: "AV UNIVERSITARIA EDIF BELLO MONTE PISO PB SECTOR EL MANGLE" },
+      { rif: "J-080188233", nombre: "POLICLINICA SUCRE, C.A.", servicio: "CLINICA", estado: "SUCRE", ciudad: "CUMANA", telf: "0293-4313701", dir: "AV FERNANDEZ DE ZERPA EDIF POLICLINICA SUCRE URB PARCELAMIENTO MIRANDA" },
+
+      // TACHIRA
+      { rif: "J-302916305", nombre: "CENTRO DE CIRUGIA SAN JOSE C.A.", servicio: "CLINICA", estado: "TACHIRA", ciudad: "SAN JUAN DE COLON", telf: "0416-9072837", dir: "CR 6 ENTRE CALLE 6 Y 7 CASA NRO. 6-68 SECTOR CASCO CENTRAL DE COLON" },
+      { rif: "J-090314814", nombre: "CENTRO DE CIRUGIA SAN SEBASTIAN, C.A", servicio: "CLINICA", estado: "TACHIRA", ciudad: "SAN CRISTOBAL", telf: "0276-3422266 / 0414-7060954", dir: "AV PRINCIPAL DE PUEBLO NUEVO NRO 18-288 SECTOR LAS PILAS" },
+      { rif: "J-090142967", nombre: "HOSPITAL MATERNO INFANTIL LOS ANDES, C.A.", servicio: "CLINICA", estado: "TACHIRA", ciudad: "SAN CRISTOBAL", telf: "0276-5109191 / 0424-7200337", dir: "CALLE 14 CON ESQUINA CARRERA 22 SECTOR BARRIO OBRERO" },
+
+      // TRUJILLO
+      { rif: "J-070041218", nombre: "CENTRO CLINICO MARIA EDELMIRA ARAUJO, S.A", servicio: "CLINICA", estado: "TRUJILLO", ciudad: "VALERA", telf: "0271-4002283 / 0414-7299236", dir: "AV 10 CON CALLE 13 EDIF CENTRO CLINICO MARIA EDELMIRA ARAUJO SECTOR CENTRO" },
+      { rif: "J-311051287", nombre: "LOS ILUSTRES CENTRO MEDICO, C.A.", servicio: "CLINICA", estado: "TRUJILLO", ciudad: "VALERA", telf: "0424-7459981 / 0414-7243426", dir: "AV BOLIVAR ENTRE CALLES 28 Y 29 QTA LOS ILUSTRES NRO 28-71 SECTOR LAS ACACIAS" },
+      { rif: "J-309594117", nombre: "CLINICA UGA, C.A.", servicio: "CLINICA", estado: "TRUJILLO", ciudad: "VALERA", telf: "0271-2318854", dir: "CALLE 19 E/AVS. BOLIVAR Y 10 LOCAL NRO 7-77 SECTOR LAS ACACIAS" },
+
+      // YARACUY
+      { rif: "J-406508616", nombre: "CENTRO MEDICO DE ATENCION INTEGRAL DIAGNOSTICO, C.A.", servicio: "APS", estado: "YARACUY", ciudad: "CHIVACOA", telf: "0412-5612683", dir: "AV 12 ENTRE CALLE 9 Y 10 EDIF DON ENZO PISO 2 OF 1 SECTOR CENTRO" },
+      { rif: "J-311531823", nombre: "I.E.Q. SAN IGNACIO, C.A.", servicio: "CLINICA", estado: "YARACUY", ciudad: "SAN FELIPE", telf: "0254-2326066 / 0414-3571612", dir: "AV ALBERTO RAVELL EDIF SAN IGNACIO OF PPAL SECTOR PIEDRA GRANDE" },
+      { rif: "J-299400955", nombre: "YARA SALUD", servicio: "APS", estado: "YARACUY", ciudad: "SAN FELIPE", telf: "0254-2349085 / 0424-5550499", dir: "AV LA PATRIA QTA YARA SALUD NRO 13-23 SECTOR ITALVEN" },
+
+      // ZULIA
+      { rif: "J-501597030", nombre: "CENTRO MEDICO DR. ERNESTO CHAVEZ, C.A", servicio: "CLINICA", estado: "ZULIA", ciudad: "MARACAIBO", telf: "0261-7656274", dir: "AV. 21 CON CALLE 24 CASA NRO. 24-27 SECTOR NORIEGA TRIGO" },
+      { rif: "J-301258380", nombre: "CENTRO CLINICO DE CABIMAS, C.A", servicio: "CLINICA", estado: "ZULIA", ciudad: "CABIMAS", telf: "0412-1088468 / 0416-3045273", dir: "CALLE CARABOBO EDF. CENTRO CLINICO CABIMAS PB SECTOR LAS DELICIAS NUEVAS" },
+      { rif: "J-301455100", nombre: "CENTRO CLINICO UNIVERSITARIO LA SAGRADA FAMILIA", servicio: "CLINICA", estado: "ZULIA", ciudad: "MARACAIBO", telf: "0261-4005210 / 0261-4005100", dir: "CALLE 83 CON AV 63 LOCAL SAGRADA FAMILIA PISO 2 SECTOR AMPARO VIA LAS LOMAS" },
+      { rif: "J-306686444", nombre: "CENTRO MEDICO DR. JOSE MUÑOZ, C.A.", servicio: "CLINICA", estado: "ZULIA", ciudad: "MARACAIBO", telf: "0412-7107056 / 0412-3766867", dir: "AV 28 CASA Nº 424-84 SECTOR LA LIMPIA" },
+      { rif: "J-070289520", nombre: "HOSPITAL EL ROSARIO, C.A.", servicio: "CLINICA", estado: "ZULIA", ciudad: "CABIMAS", telf: "0264-3709600 / 0424-6063464", dir: "CARRETERA K SECTOR 5 BOCAS EDIF HOSPITAL EL ROSARIO PISO 1" },
+      { rif: "J-070099682", nombre: "POLICLINICA SAN FRANCISCO, C.A.", servicio: "CLINICA", estado: "ZULIA", ciudad: "MARACAIBO", telf: "0261-4004764 / 0261-4004600", dir: "AV 5 PRINCIPAL DE SAN FRANCISCO EDF POLICLINICA SAN FRANCISCO" },
+      { rif: "J-309358111", nombre: "HOSPITALIZACION CLINICO, C.A", servicio: "CLINICA", estado: "ZULIA", ciudad: "MARACAIBO", telf: "0261-8143392", dir: "AV 15 LAS DELICIAS EDIF HOSPITAL CLINICO, URB LA TRINIDAD" },
+      { rif: "J-301884787", nombre: "CENTRO CLINICO QUIRURGICO LIA ELENA, C.A", servicio: "CLINICA", estado: "ZULIA", ciudad: "SANTA BARBARA DEL ZULIA", telf: "0275-5554353", dir: "CALLE 7 NO. 12-58 SANTA BARBARA DEL ZULIA" }
+    ];
+
+    // State Variables
+    let currentView = 'grid';
+    let filteredData = [...PROVEEDORES_DB];
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      inicializarFiltros();
+      renderizarPillsRapidas();
+      actualizarEstadisticas();
+      filtrarYRenderizar();
+      document.getElementById('badgeTotalDirectorio').innerText = PROVEEDORES_DB.length;
+    });
+
+    // Populate Estado and Quick Pills
+    function inicializarFiltros() {
+      const selectEstado = document.getElementById('selectEstado');
+      const estados = [...new Set(PROVEEDORES_DB.map(item => item.estado))].sort((a, b) => {
+        if (a === "CARABOBO") return -1;
+        if (b === "CARABOBO") return 1;
+        return a.localeCompare(b);
+      });
+
+      estados.forEach(edo => {
+        const opt = document.createElement('option');
+        opt.value = edo;
+        opt.textContent = edo === "CARABOBO" ? `⭐ ${edo} (Sede UPTPC)` : edo;
+        selectEstado.appendChild(opt);
+      });
+
+      // Default select Carabobo because UPTPC is located in Puerto Cabello, Carabobo
+      selectEstado.value = "CARABOBO";
+      actualizarSelectCiudades();
+    }
+
+    // Quick Select Buttons
+    function renderizarPillsRapidas() {
+      const quickZones = [
+        { label: "📍 Puerto Cabello (UPTPC)", estado: "CARABOBO", ciudad: "PUERTO CABELLO", highlight: true },
+        { label: "📍 Valencia", estado: "CARABOBO", ciudad: "VALENCIA" },
+        { label: "📍 Maracay", estado: "ARAGUA", ciudad: "MARACAY" },
+        { label: "📍 Caracas", estado: "DISTRITO CAPITAL", ciudad: "CARACAS" },
+        { label: "📍 Barquisimeto", estado: "LARA", ciudad: "BARQUISIMETO" },
+        { label: "📍 Morón", estado: "CARABOBO", ciudad: "MORON" },
+        { label: "🌐 Todo Carabobo", estado: "CARABOBO", ciudad: "TODAS" },
+        { label: "🇻🇪 Todo el País", estado: "TODOS", ciudad: "TODAS" }
+      ];
+
+      const container = document.getElementById('quickPillsContainer');
+      container.innerHTML = '';
+
+      quickZones.forEach(z => {
+        const btn = document.createElement('button');
+        const isHighlight = z.highlight;
+        btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold transition border ${
+          isHighlight 
+            ? 'bg-uptpc-navy text-uptpc-gold border-uptpc-gold shadow-sm hover:bg-uptpc-blue' 
+            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+        }`;
+        btn.innerHTML = z.label;
+        btn.onclick = () => seleccionarZonaRapida(z.estado, z.ciudad);
+        container.appendChild(btn);
+      });
+    }
+
+    function seleccionarZonaRapida(estado, ciudad) {
+      document.getElementById('selectEstado').value = estado;
+      actualizarSelectCiudades();
+      document.getElementById('selectCiudad').value = ciudad;
+      document.getElementById('inputBusqueda').value = '';
+      document.getElementById('btnClearSearch').classList.add('hidden');
+      filtrarYRenderizar();
+      mostrarToast(`Zona seleccionada: ${ciudad === 'TODAS' ? (estado === 'TODOS' ? 'Todo el País' : estado) : ciudad}`);
+    }
+
+    function onEstadoChange() {
+      actualizarSelectCiudades();
+      filtrarYRenderizar();
+    }
+
+    function onCiudadChange() {
+      filtrarYRenderizar();
+    }
+
+    function actualizarSelectCiudades() {
+      const estado = document.getElementById('selectEstado').value;
+      const selectCiudad = document.getElementById('selectCiudad');
+      selectCiudad.innerHTML = '<option value="TODAS">Todas las Ciudades / Zonas</option>';
+
+      let ciudadesDisponibles = [];
+      if (estado === "TODOS") {
+        ciudadesDisponibles = [...new Set(PROVEEDORES_DB.map(p => p.ciudad))];
+      } else {
+        ciudadesDisponibles = [...new Set(PROVEEDORES_DB.filter(p => p.estado === estado).map(p => p.ciudad))];
+      }
+      ciudadesDisponibles.sort().forEach(cd => {
+        const opt = document.createElement('option');
+        opt.value = cd;
+        opt.textContent = cd;
+        selectCiudad.appendChild(opt);
+      });
+    }
+
+    function limpiarBusqueda() {
+      document.getElementById('inputBusqueda').value = '';
+      document.getElementById('btnClearSearch').classList.add('hidden');
+      filtrarYRenderizar();
+    }
+
+    function resetearFiltros() {
+      document.getElementById('selectEstado').value = 'TODOS';
+      actualizarSelectCiudades();
+      document.getElementById('selectCiudad').value = 'TODAS';
+      document.getElementById('selectServicio').value = 'TODOS';
+      document.getElementById('inputBusqueda').value = '';
+      document.getElementById('btnClearSearch').classList.add('hidden');
+      filtrarYRenderizar();
+      mostrarToast("Filtros restablecidos");
+    }
+  </script>
+
+  <script>
+    function filtrarYRenderizar() {
+      const estadoSel = document.getElementById('selectEstado').value;
+      const ciudadSel = document.getElementById('selectCiudad').value;
+      const servicioSel = document.getElementById('selectServicio').value;
+      const busqueda = document.getElementById('inputBusqueda').value.trim().toLowerCase();
+
+      // Show/hide clear search button
+      const clearBtn = document.getElementById('btnClearSearch');
+      if (busqueda.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      filteredData = PROVEEDORES_DB.filter(item => {
+        const matchEstado = (estadoSel === 'TODOS') || (item.estado === estadoSel);
+        const matchCiudad = (ciudadSel === 'TODAS') || (item.ciudad === ciudadSel);
+        const matchServicio = (servicioSel === 'TODOS') || (item.servicio === servicioSel);
+        
+        const textTarget = `${item.nombre} ${item.rif} ${item.ciudad} ${item.estado} ${item.dir} ${item.telf}`.toLowerCase();
+        const matchBusqueda = !busqueda || textTarget.includes(busqueda);
+
+        return matchEstado && matchCiudad && matchServicio && matchBusqueda;
+      });
+
+      // Update counter and labels
+      document.getElementById('labelConteoFiltrados').innerText = `${filteredData.length} ${filteredData.length === 1 ? 'proveedor' : 'proveedores'}`;
+      
+      let zonaDesc = '';
+      if (ciudadSel !== 'TODAS') {
+        zonaDesc = `${ciudadSel} (${estadoSel})`;
+      } else if (estadoSel !== 'TODOS') {
+        zonaDesc = `Estado ${estadoSel}`;
+      } else {
+        zonaDesc = 'Todo el Territorio Nacional';
+      }
+      document.getElementById('labelZonaActual').innerText = zonaDesc;
+
+      const btnDescargarZona = document.getElementById('btnDescargarZona');
+      btnDescargarZona.disabled = filteredData.length === 0;
+      if (filteredData.length === 0) {
+        btnDescargarZona.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        btnDescargarZona.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+
+      actualizarEstadisticas();
+      renderizarResultados();
+    }
+
+    function actualizarEstadisticas() {
+      const base = filteredData.length > 0 ? filteredData : PROVEEDORES_DB;
+      const countClinica = base.filter(p => p.servicio === 'CLINICA').length;
+      const countAPS = base.filter(p => p.servicio === 'APS').length;
+      const countFar = base.filter(p => p.servicio === 'FARMACIA').length;
+
+      document.getElementById('statClinicas').innerText = countClinica;
+      document.getElementById('statAPS').innerText = countAPS;
+      document.getElementById('statFarmacias').innerText = countFar;
+    }
+
+    function renderizarResultados() {
+      const grid = document.getElementById('contenedorGrid');
+      const tableBody = document.getElementById('tablaResultadosBody');
+      const emptyState = document.getElementById('contenedorVacio');
+      const tableContainer = document.getElementById('contenedorTabla');
+
+      grid.innerHTML = '';
+      tableBody.innerHTML = '';
+
+      if (filteredData.length === 0) {
+        grid.classList.add('hidden');
+        tableContainer.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      if (currentView === 'grid') {
+        grid.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+      } else {
+        grid.classList.add('hidden');
+        tableContainer.classList.remove('hidden');
+      }
+
+      filteredData.forEach(p => {
+        // Tag styles
+        let badgeColor = 'bg-blue-100 text-blue-800 border-blue-200';
+        let iconClass = 'fa-solid fa-hospital';
+        if (p.servicio === 'APS') {
+          badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+          iconClass = 'fa-solid fa-user-doctor';
+        } else if (p.servicio === 'FARMACIA') {
+          badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+          iconClass = 'fa-solid fa-prescription-bottle-medical';
+        }
+
+        // 1. Grid Card
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group";
+        
+        // Sanitize phone for tel link
+        const firstPhone = p.telf.split('/')[0].replace(/[^\d+]/g, '');
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-3">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${badgeColor}">
+                <i class="${iconClass}"></i> ${p.servicio}
+              </span>
+              <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                ${p.rif}
+              </span>
+            </div>
+
+            <h3 class="font-extrabold text-slate-900 text-base leading-snug group-hover:text-uptpc-blue transition-colors">
+              ${p.nombre}
+            </h3>
+
+            <div class="mt-2 flex items-center text-xs text-slate-500 font-semibold gap-1.5">
+              <i class="fa-solid fa-location-dot text-rose-500"></i>
+              <span>${p.ciudad}</span>
+              <span class="text-slate-300">&bull;</span>
+              <span class="text-slate-400 font-medium">${p.estado}</span>
+            </div>
+
+            <div class="mt-3 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-3">
+              <i class="fa-solid fa-map-pin text-slate-400 mr-1"></i> ${p.dir}
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+            <div class="text-xs font-bold text-slate-700 truncate max-w-[170px]" title="${p.telf}">
+              <i class="fa-solid fa-phone text-slate-400 mr-1"></i> ${p.telf}
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${firstPhone ? `
+                <a href="tel:${firstPhone}" class="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-uptpc-blue text-xs font-semibold transition" title="Llamar">
+                  <i class="fa-solid fa-phone"></i>
+                </a>
+              ` : ''}
+              <button onclick="copiarDetalle('${p.nombre}', '${p.telf}', '${p.dir}')" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs transition" title="Copiar Datos">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+
+        // 2. Table Row
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition";
+        tr.innerHTML = `
+          <td class="p-3 whitespace-nowrap">
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold border ${badgeColor}">
+              <i class="${iconClass}"></i> ${p.servicio}
+            </span>
+          </td>
+          <td class="p-3">
+            <div class="font-bold text-slate-900">${p.nombre}</div>
+            <div class="text-[11px] font-mono text-slate-400">${p.rif}</div>
+          </td>
+          <td class="p-3 whitespace-nowrap">
+            <div class="font-semibold text-slate-800">${p.ciudad}</div>
+            <div class="text-[11px] text-slate-500">${p.estado}</div>
+          </td>
+          <td class="p-3 whitespace-nowrap text-slate-700 font-medium">
+            ${p.telf}
+          </td>
+          <td class="p-3 text-slate-600 max-w-xs text-xs">
+            ${p.dir}
+          </td>
+          <td class="p-3 text-center whitespace-nowrap">
+            <button onclick="copiarDetalle('${p.nombre}', '${p.telf}', '${p.dir}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition text-xs">
+              <i class="fa-regular fa-copy mr-1"></i> Copiar
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function cambiarVista(vista) {
+      currentView = vista;
+      const btnGrid = document.getElementById('btnVistaGrid');
+      const btnTabla = document.getElementById('btnVistaTabla');
+
+      if (vista === 'grid') {
+        btnGrid.className = "p-1.5 rounded-lg text-xs font-semibold text-uptpc-navy bg-white shadow-sm";
+        btnTabla.className = "p-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-uptpc-navy";
+      } else {
+        btnTabla.className = "p-1.5 rounded-lg text-xs font-semibold text-uptpc-navy bg-white shadow-sm";
+        btnGrid.className = "p-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-uptpc-navy";
+      }
+      renderizarResultados();
+    }
+
+    function copiarDetalle(nombre, telf, dir) {
+      const texto = `*${nombre}*\nTeléfono: ${telf}\nDirección: ${dir}\n(Red Bienestar Social UPTPC / Seguros Miranda)`;
+      
+      const textArea = document.createElement("textarea");
+      textArea.value = texto;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        mostrarToast("Información copiada al portapapeles");
+      } catch (err) {
+        mostrarToast("No se pudo copiar automáticamente");
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function mostrarToast(mensaje, esExito = true) {
+      const toast = document.getElementById('toastNotification');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMessage.innerText = mensaje;
+      if (esExito) {
+        toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-base";
+      } else {
+        toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-base";
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+
+  <script>
+    // Generates a PDF with the institutional header of Bienestar Social UPTPC
+    function generarDocumentoPDF(listaProveedores, tituloZona, nombreArchivo) {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        mostrarToast("Error al cargar la librería de PDF. Intenta nuevamente.", false);
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      // Orientation: Landscape for optimal tabular view
+      const doc = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      // Institutional Header Drawer Function
+      function drawHeader(data) {
+        // Draw top gold/navy double banner line
+        doc.setFillColor(11, 37, 69); // uptpc-navy
+        doc.rect(0, 0, pageWidth, 28, 'F');
+
+        doc.setFillColor(197, 155, 39); // uptpc-gold
+        doc.rect(0, 28, pageWidth, 2, 'F');
+
+        // Header Institutional Text
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text("REPÚBLICA BOLIVARIANA DE VENEZUELA", pageWidth / 2, 7, { align: 'center' });
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.text("MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA", pageWidth / 2, 11, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text("UNIVERSIDAD POLITÉCNICA TERRITORIAL DE PUERTO CABELLO (UPTPC)", pageWidth / 2, 16.5, { align: 'center' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(243, 232, 200); // gold light
+        doc.text("DIRECCIÓN DE BIENESTAR SOCIAL  •  CONVENIO SEGUROS MIRANDA", pageWidth / 2, 21.5, { align: 'center' });
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(220, 230, 242);
+        doc.text("RED NACIONAL DE PROVEEDORES MÉDICOS, CLÍNICAS Y FARMACIAS", pageWidth / 2, 25.5, { align: 'center' });
+      }
+
+      // Title & Context Box before table
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, 33, pageWidth - 28, 14, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(11, 37, 69);
+      doc.text(`ZONA / FILTRO SELECCIONADO: ${tituloZona.toUpperCase()}`, 18, 39);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(100, 116, 139);
+      const fechaHoy = new Date().toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.text(`Total Prestadores: ${listaProveedores.length}  |  Fecha de Consulta: ${fechaHoy}  |  Válido para el personal Docente, Administrativo y Obrero`, 18, 44);
+
+      // Table formatting
+      const tableData = listaProveedores.map((p, idx) => [
+        (idx + 1).toString(),
+        p.rif,
+        p.nombre,
+        p.servicio,
+        `${p.ciudad}\n(${p.estado})`,
+        p.telf,
+        p.dir
+      ]);
+
+      doc.autoTable({
+        startY: 50,
+        head: [['#', 'R.I.F.', 'PROVEEDOR DE SALUD', 'SERVICIO', 'CIUDAD / ESTADO', 'TELÉFONO MASTER', 'DIRECCIÓN DE ATENCIÓN']],
+        body: tableData,
+        margin: { top: 32, left: 14, right: 14, bottom: 18 },
+        theme: 'grid',
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          valign: 'middle',
+          overflow: 'linebreak',
+          textColor: [30, 41, 59]
+        },
+        headStyles: {
+          fillColor: [11, 37, 69],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 7.5,
+          halign: 'center'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        columnStyles: {
+          0: { cellWidth: 8, halign: 'center' },
+          1: { cellWidth: 22, halign: 'center', fontStyle: 'bold' },
+          2: { cellWidth: 55, fontStyle: 'bold' },
+          3: { cellWidth: 20, halign: 'center' },
+          4: { cellWidth: 32, halign: 'center' },
+          5: { cellWidth: 36 },
+          6: { cellWidth: 'auto' }
+        },
+        didDrawPage: function(data) {
+          // Draw official header on every page
+          drawHeader(data);
+
+          // Footer
+          const str = `Página ${doc.internal.getNumberOfPages()} - Documento Oficial de Bienestar Social UPTPC • Puerto Cabello`;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(100, 116, 139);
+          doc.text(str, pageWidth / 2, pageHeight - 7, { align: 'center' });
+
+          // Sello decorativo de validación
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(197, 155, 39);
+          doc.text("SISTEMA INTEGRADO DE SALUD UPTPC - SEGUROS MIRANDA", pageWidth - 14, pageHeight - 7, { align: 'right' });
+        }
+      });
+
+      // Download trigger
+      doc.save(nombreArchivo);
+      mostrarToast(`PDF descargado: ${nombreArchivo}`);
+    }
+
+    // Download only currently selected zone
+    function generarPDFZonaSeleccionada() {
+      if (filteredData.length === 0) {
+        mostrarToast("No hay registros en la zona para descargar", false);
+        return;
+      }
+
+      const estadoSel = document.getElementById('selectEstado').value;
+      const ciudadSel = document.getElementById('selectCiudad').value;
+      
+      let zonaDesc = '';
+      let fileSlug = '';
+
+      if (ciudadSel !== 'TODAS') {
+        zonaDesc = `${ciudadSel}, Estado ${estadoSel}`;
+        fileSlug = ciudadSel.toLowerCase().replace(/\s+/g, '_');
+      } else if (estadoSel !== 'TODOS') {
+        zonaDesc = `Estado ${estadoSel}`;
+        fileSlug = estadoSel.toLowerCase().replace(/\s+/g, '_');
+      } else {
+        zonaDesc = "Todas las Zonas Filtradas";
+        fileSlug = "directorio_filtrado";
+      }
+
+      const nombreArchivo = `UPTPC_Proveedores_${fileSlug}.pdf`;
+      generarDocumentoPDF(filteredData, zonaDesc, nombreArchivo);
+    }
+
+    // Download entire national directory
+    function generarPDFCompleto() {
+      const nombreArchivo = `UPTPC_Directorio_Nacional_Completo.pdf`;
+      generarDocumentoPDF(PROVEEDORES_DB, "DIRECTORIO COMPLETO A NIVEL NACIONAL", nombreArchivo);
+    }
+  </script>
+</body>
+</html>
