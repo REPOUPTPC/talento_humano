@@ -170,31 +170,31 @@
   <!-- ================= VENTANA MODAL FORMATO XL ================= -->
   <div 
     id="modal-xl" 
-    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 lg:p-6 transition-all"
+    class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 lg:p-6 transition-all"
     onclick="cerrarModalAlClicFuera(event)"
   >
-    <!-- Modal Container XL (Extra Large: 96% ancho y 94% alto) -->
-    <div class="bg-white rounded-2xl shadow-xl-modal w-[96vw] max-w-7xl h-[94vh] flex flex-col overflow-hidden border border-slate-700/30 animate-fade-in">
+    <!-- Modal Container XL (Adaptable en móvil y pantallas grandes) -->
+    <div class="bg-white sm:rounded-2xl rounded-none shadow-xl-modal w-full sm:w-[96vw] max-w-7xl h-full sm:h-[94vh] flex flex-col overflow-hidden border-0 sm:border border-slate-700/30 animate-fade-in">
       
-      <!-- Modal Header -->
-      <div class="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-base shadow-sm">
+      <!-- Modal Header (Flex con flex-1 y shrink-0 para asegurar visibilidad de la X) -->
+      <div class="bg-slate-900 text-white px-3 sm:px-5 py-3 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm sm:text-base shadow-sm shrink-0">
             <i class="fa-solid fa-window-maximize"></i>
           </div>
-          <div class="flex items-center gap-2">
-            <h3 id="modal-xl-title" class="font-bold text-base sm:text-lg text-white truncate max-w-xs sm:max-w-md">Vista Modal XL</h3>
-            <span class="px-2 py-0.5 rounded bg-blue-500/20 text-sky-300 text-[10px] font-bold tracking-wider uppercase border border-sky-400/30">Formato XL</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <h3 id="modal-xl-title" class="font-bold text-sm sm:text-lg text-white truncate">Vista Modal XL</h3>
+            <span class="hidden md:inline-block px-2 py-0.5 rounded bg-blue-500/20 text-sky-300 text-[10px] font-bold tracking-wider uppercase border border-sky-400/30 shrink-0">Formato XL</span>
           </div>
         </div>
 
-        <!-- Acciones del Modal -->
-        <div class="flex items-center gap-2">
+        <!-- Acciones del Modal (shrink-0 garantiza que el botón X nunca se desborde ni tape) -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <a 
             id="modal-xl-ext-link" 
             href="#" 
             target="_blank" 
-            class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700"
+            class="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700 shadow-sm"
             title="Abrir en pestaña nueva"
           >
             <i class="fa-solid fa-up-right-from-square text-xs"></i>
@@ -202,10 +202,10 @@
           </a>
           <button 
             onclick="cerrarModalXL()" 
-            class="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white transition-colors flex items-center justify-center ml-2 border border-rose-500/30"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white transition-colors flex items-center justify-center border border-rose-500/30 shrink-0"
             title="Cerrar modal (ESC)"
           >
-            <i class="fa-solid fa-xmark text-xl"></i>
+            <i class="fa-solid fa-xmark text-lg sm:text-xl"></i>
           </button>
         </div>
       </div>
