@@ -589,6 +589,7 @@ function doGet(e) {
           }
 
           resultados.push({
+            _rowIndex: r + 1,
             Documento: colDocumento !== -1 ? String(row[colDocumento] || "") : "",
             Cedula: empCedula,
             Nombre: empNombre,
@@ -858,6 +859,8 @@ function doPost(e) {
         return jsonResponse({ success: false, error: "No se pudo identificar la fila a actualizar." });
       }
       
+      var rowRange = mainSheet.getRange(rowIndex, 1, 1, headers.length);
+      var rowVals = rowRange.getValues()[0];
       for (var c = 0; c < headers.length; c++) {
         var headerName = headers[c];
         if (updatedData.hasOwnProperty(headerName)) {
@@ -867,9 +870,10 @@ function doPost(e) {
           } else if (headerName.toLowerCase().indexOf("remuneracion") !== -1 || headerName.toLowerCase().indexOf("sueldo") !== -1) {
             valToSave = formatRemuneracionBs(valToSave);
           }
-          mainSheet.getRange(rowIndex, c + 1).setValue(valToSave);
+          rowVals[c] = valToSave;
         }
       }
+      rowRange.setValues([rowVals]);
       
       return jsonResponse({ success: true, message: "Expediente actualizado exitosamente." });
     }
@@ -1078,7 +1082,7 @@ function findColumnIndexFlex(headers, keywords) {
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form id="formEdicionIndividual">
+          <form id="formEdicionIndividual" onsubmit="event.preventDefault();">
             <input type="hidden" id="editRowIndex">
             <div class="row g-3" id="formEdicionCampos">
               <!-- Se genera dinámicamente con JS -->

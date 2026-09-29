@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGenerarPdfInd = document.getElementById('btnGenerarPdfInd');
 
   const modalEdicionIndividual = new bootstrap.Modal(document.getElementById('modalEdicionIndividual'));
+  const formEdicionIndividual = document.getElementById('formEdicionIndividual');
   const formEdicionCampos = document.getElementById('formEdicionCampos');
   const btnGuardarEdicionIndividual = document.getElementById('btnGuardarEdicionIndividual');
   const spinnerGuardarInd = document.getElementById('spinnerGuardarInd');
@@ -1033,6 +1034,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modalEdicionIndividual.show();
   });
+
+  if (formEdicionIndividual) {
+    formEdicionIndividual.addEventListener('submit', (e) => {
+      e.preventDefault();
+      btnGuardarEdicionIndividual.click();
+    });
+  }
 
   btnGuardarEdicionIndividual.addEventListener('click', async () => {
     const inputs = formEdicionCampos.querySelectorAll('input');
