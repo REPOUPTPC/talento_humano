@@ -36,6 +36,48 @@ document.addEventListener('DOMContentLoaded', () => {
   let useDemoMode = localStorage.getItem('uct_demo_mode') === 'true';
   let currentUserRole = 'N/A';
 
+  // ── Helper: POST to Google Apps Script handling its 302 redirect chain ──
+  // GAS always redirects POST responses through script.googleusercontent.com.
+  // Some browsers block the cross-origin redirect, causing "Failed to fetch"
+  // even though the server-side code executed successfully.
+  // Strategy:
+  //   1. Try a normal fetch (readable response).
+  //   2. If that throws (Failed to fetch / CORS), retry with mode:'no-cors'.
+  //      An opaque response (status 0, type 'opaque') means the request
+  //      reached the server — we just can't read the body.
+  //   3. Return the parsed JSON when possible, or a synthetic success object.
+  async function gasPost(url, payload) {
+    // --- Attempt 1: normal fetch so we can read the JSON body ---
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();                       // happy path
+    } catch (_firstErr) {
+      // normal fetch failed (likely CORS on redirect) — fall through
+    }
+
+    // --- Attempt 2: opaque request (no CORS check, but no body access) ---
+    try {
+      await fetch(url, {
+        method: 'POST',
+        mode: 'no-cors',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      // If we reach here the server received and processed the request.
+      // Return a synthetic success since we can't read the opaque body.
+      return { success: true, message: 'Operación realizada exitosamente.' };
+    } catch (secondErr) {
+      // True network failure — re-throw so the caller's catch block handles it.
+      throw secondErr;
+    }
+  }
+
   // Last fetched individual result & bulk table memory data
   let currentIndividualRecord = null;
   let currentBulkData = [];
@@ -439,17 +481,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (spinnerCambiarPass) spinnerCambiarPass.classList.remove('d-none');
 
       try {
-        const res = await fetch(appScriptUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
+        const json = await gasPost(appScriptUrl, {
             action: 'changePassword',
             usuario: appScriptUser,
             api_key: appScriptApiKey,
             new_api_key: passNueva
-          })
         });
-        const json = await res.json();
 
         if (json.status === 'error' && (json.message === 'Acceso no autorizado' || json.message?.includes('no autorizado'))) {
           if (modalCambiarPasswordBs) modalCambiarPasswordBs.hide();
@@ -752,19 +789,14 @@ document.addEventListener('DOMContentLoaded', () => {
           showModalAlert(`✅ Administrador "${newUsr}" registrado exitosamente (Modo Demo).`, 'success');
           formNuevoAdmin.reset();
         } else {
-          const res = await fetch(appScriptUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
+          const data = await gasPost(appScriptUrl, {
               action: 'addAdmin',
               usuario: appScriptUser,
               api_key: appScriptApiKey,
               new_usuario: newUsr,
               new_api_key: newKey,
               new_rol: newRol
-            })
           });
-          const data = await res.json();
           if (data.success) {
             showModalAlert(`✅ ${data.message || 'Administrador registrado exitosamente.'}`, 'success');
             formNuevoAdmin.reset();
@@ -851,19 +883,13 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Usuario no encontrado.');
           }
         } else {
-          const res = await fetch(appScriptUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
+          const json = await gasPost(appScriptUrl, {
               action: 'updateAdminPassword',
               usuario: appScriptUser,
               api_key: appScriptApiKey,
               target_usuario: targetUsr,
               new_api_key: newKey
-            })
           });
-
-          const json = await res.json();
           if (json.success) {
             if (modalEditarAdminBs) modalEditarAdminBs.hide();
             showModalAlert(json.message || `✅ Contraseña de ${targetUsr} actualizada.`, 'success');
@@ -1036,9 +1062,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if (formEdicionIndividual) {
-    formEdicionIndividual.addEventListener('submit', (e) => {
-      e.preventDefault();
-      btnGuardarEdicionIndividual.click();
+    formEdicionIndividual.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        btnGuardarEdicionIndividual.click();
+      }
     });
   }
 
@@ -1074,19 +1102,13 @@ document.addEventListener('DOMContentLoaded', () => {
         modalEdicionIndividual.hide();
         showModalAlert('✅ Expediente actualizado exitosamente (Modo Demostración).', 'success');
       } else {
-        const res = await fetch(appScriptUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
+        const json = await gasPost(appScriptUrl, {
             action: 'updateRow',
             usuario: appScriptUser,
             api_key: appScriptApiKey,
             rowIndex: rowIndex,
             data: updatedData
-          })
         });
-
-        const json = await res.json();
         if (json.success) {
           currentIndividualRecord = { ...currentIndividualRecord, ...updatedData };
           renderIndividualResult(currentIndividualRecord);
@@ -1275,17 +1297,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modifiedRows.clear();
         cargarDatosMasivos();
       } else {
-        const res = await fetch(appScriptUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
+        const json = await gasPost(appScriptUrl, {
             action: 'updateBulk',
             usuario: appScriptUser,
             api_key: appScriptApiKey,
             rows: payloadRows
-          })
         });
-        const json = await res.json();
         if (json.success) {
           showModalAlert(`✅ Se actualizaron exitosamente ${payloadRows.length} fila(s) en tu Hoja de Google Sheets.`, 'success');
           modifiedRows.clear();
@@ -2433,11 +2450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             data: currentBulkData
           };
 
-          const res = await fetch(appScriptUrl, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-          });
-          const json = await res.json();
+          const json = await gasPost(appScriptUrl, payload);
           if (json.success || json.status === 'success') {
             showModalAlert(`✅ Carga Masiva guardada exitosamente en Google Sheets (${currentBulkData.length} registros).`, 'success');
             

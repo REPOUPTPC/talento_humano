@@ -1082,12 +1082,12 @@ function findColumnIndexFlex(headers, keywords) {
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body p-4">
-          <form id="formEdicionIndividual" onsubmit="event.preventDefault();">
+          <div id="formEdicionIndividual">
             <input type="hidden" id="editRowIndex">
             <div class="row g-3" id="formEdicionCampos">
               <!-- Se genera dinámicamente con JS -->
             </div>
-          </form>
+          </div>
         </div>
         <div class="modal-footer bg-light">
           <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
