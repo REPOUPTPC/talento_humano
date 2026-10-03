@@ -1897,13 +1897,34 @@ document.addEventListener('DOMContentLoaded', () => {
       const status = emp.Status || '';
 
       const esJubilado = String(status).toUpperCase().includes('JUBILAD') || String(categoriaReal).toUpperCase().includes('JUBILAD');
-      const validez = "Válido por 90 Días";
+      const diasVigencia = esJubilado ? 90 : 30;
+      const validez = `Válido por ${diasVigencia} Días`;
 
       const fechaEmision = new Date();
-      const fechaCaducidad = new Date(fechaEmision.getTime() + 90 * 24 * 60 * 60 * 1000);
+      const fechaCaducidad = new Date(fechaEmision.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
 
       const fechaEmisionStr = formatDateDDMMAAAA(fechaEmision);
       const fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidad);
+
+      // Guardar fechas en el objeto local y sincronizar con backend/Google Sheets
+      emp.fecha_emision = fechaEmisionStr;
+      emp.fecha_vencimiento = fechaCaducidadStr;
+
+      if (!useDemoMode && appScriptUrl) {
+        try {
+          gasPost(appScriptUrl, {
+            action: 'updateRow',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            rowIndex: emp._rowIndex,
+            data: {
+              Cedula: emp.Cedula,
+              fecha_emision: fechaEmisionStr,
+              fecha_vencimiento: fechaCaducidadStr
+            }
+          }).catch(e => console.error("Error guardando fechas:", e));
+        } catch (e) {}
+      }
 
       const remuneracionNum = parseFloat(String(remuneracionMensual).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
       const remuneracionRedondeada = Number(remuneracionNum.toFixed(2));
@@ -1925,7 +1946,9 @@ document.addEventListener('DOMContentLoaded', () => {
         textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, presta servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, desde el ${desdePDF}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
       }
 
-      const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
+      const textoFechas = esJubilado ?
+        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.` :
+        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
 
       const qrText = esJubilado ? 
         `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}` :
