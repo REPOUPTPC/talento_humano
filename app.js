@@ -5,11 +5,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- LOCAL DEMO DATA (Matching user's headers) ---
   let demoDatabase = [
-    { "_rowIndex": 2, "Documento": "V-15949430", "Cedula": "15949430", "Nombre": "Pedro Antonio Morales", "Categoria": "Administrativo", "Cargo": "Analista de Personal", "Desde": "01/02/2019", "RemuneracionMensual": "500.00 Bs", "Codigo": "COD-1594", "Status": "Activo" },
-    { "_rowIndex": 3, "Documento": "V-12345678", "Cedula": "12345678", "Nombre": "Juan Carlos Pérez Gómez", "Categoria": "Docente Fijo", "Cargo": "Profesor Agregado", "Desde": "15/01/2023", "RemuneracionMensual": "500.00 Bs", "Codigo": "COD-001", "Status": "Activo" },
-    { "_rowIndex": 4, "Documento": "V-87654321", "Cedula": "87654321", "Nombre": "María Alejandra Rodríguez López", "Categoria": "Administrativo", "Cargo": "Coordinadora de RRHH", "Desde": "20/05/2022", "RemuneracionMensual": "650.00 Bs", "Codigo": "COD-002", "Status": "Activo" },
-    { "_rowIndex": 5, "Documento": "V-11223344", "Cedula": "11223344", "Nombre": "Carlos Eduardo Mendoza Silva", "Categoria": "Docente Contratado", "Cargo": "Desarrollador de Software", "Desde": "10/02/2024", "RemuneracionMensual": "700.00 Bs", "Codigo": "COD-003", "Status": "Activo" },
-    { "_rowIndex": 6, "Documento": "V-55667788", "Cedula": "55667788", "Nombre": "Ana Lucía Gómez Fernández", "Categoria": "Obrero", "Cargo": "Especialista de Laboratorio", "Desde": "01/11/2021", "RemuneracionMensual": "450.00 Bs", "Codigo": "COD-004", "Status": "Inactivo" }
+    { "_rowIndex": 2, "Documento": "V-15949430", "Cedula": "15949430", "Nombre": "Pedro Antonio Morales", "Categoria": "Administrativo", "Cargo": "Analista de Personal", "Desde": "01/02/2019", "RemuneracionMensual": "500.00 Bs", "Codigo": "COD-1594", "Status": "Activo", "visible": true, "id_mensaje": null, "mensaje": "" },
+    { "_rowIndex": 3, "Documento": "V-12345678", "Cedula": "12345678", "Nombre": "Juan Carlos Pérez Gómez", "Categoria": "Docente Fijo", "Cargo": "Profesor Agregado", "Desde": "15/01/2023", "RemuneracionMensual": "500.00 Bs", "Codigo": "COD-001", "Status": "Activo", "visible": true, "id_mensaje": null, "mensaje": "" },
+    { "_rowIndex": 4, "Documento": "V-87654321", "Cedula": "87654321", "Nombre": "María Alejandra Rodríguez López", "Categoria": "Administrativo", "Cargo": "Coordinadora de RRHH", "Desde": "20/05/2022", "RemuneracionMensual": "650.00 Bs", "Codigo": "COD-002", "Status": "Activo", "visible": true, "id_mensaje": null, "mensaje": "" },
+    { "_rowIndex": 5, "Documento": "V-11223344", "Cedula": "11223344", "Nombre": "Carlos Eduardo Mendoza Silva", "Categoria": "Docente Contratado", "Cargo": "Desarrollador de Software", "Desde": "10/02/2024", "RemuneracionMensual": "700.00 Bs", "Codigo": "COD-003", "Status": "Activo", "visible": true, "id_mensaje": null, "mensaje": "" },
+    { "_rowIndex": 6, "Documento": "V-55667788", "Cedula": "55667788", "Nombre": "Ana Lucía Gómez Fernández", "Categoria": "Obrero", "Cargo": "Especialista de Laboratorio", "Desde": "01/11/2021", "RemuneracionMensual": "450.00 Bs", "Codigo": "COD-004", "Status": "Inactivo", "visible": true, "id_mensaje": null, "mensaje": "" },
+    { "_rowIndex": 7, "Documento": "V-7166875", "Cedula": "7166875", "Nombre": "CASTRO LOPEZ RAMON EDUARDO", "Categoria": "FUNCIONARIO DE CARRERA", "Cargo": "PROFESIONAL NIVEL XII", "Desde": "01/04/2005", "RemuneracionMensual": "461.48 Bs", "Codigo": "ZQA3570IXR1181", "Status": "Jubilado", "visible": true, "id_mensaje": null, "mensaje": "" }
+  ];
+
+  let demoMensajes = [
+    { id: "1", mensaje: "Emisión de constancia de trabajo suspendida temporalmente por actualización de expediente." },
+    { id: "2", mensaje: "Emisión suspendida por proceso de auditoría institucional de talento humano." }
   ];
 
   let demoAdmins = [
@@ -24,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { usuario: "Público (Web)", consultado: "V-15949430", ip: "190.202.15.8", fecha: "29/08/2026 11:45:22", rol: "USER" }
   ];
 
-  const defaultHeaders = ["Cedula", "Nombre", "Categoria", "Cargo", "Desde", "RemuneracionMensual", "Codigo", "Status"];
+  const defaultHeaders = ["Cedula", "Nombre", "Categoria", "Cargo", "Desde", "RemuneracionMensual", "Codigo", "Status", "visible", "id_mensaje", "fecha_emision", "fecha_vencimiento"];
   let lastStatsLogs = [];
   let currentAdminsList = [];
 
@@ -992,6 +998,33 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderIndividualResult(record) {
     gridResultadoCampos.innerHTML = '';
 
+    const isVisible = !(record.visible === false || String(record.visible).toUpperCase() === 'FALSE' || record.visible === 0);
+    if (!isVisible) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'col-12 mb-2';
+      alertDiv.innerHTML = `
+        <div class="alert alert-danger shadow-sm border-start border-danger border-4 mb-0">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <h6 class="fw-bold mb-1 text-danger"><i class="bi bi-slash-circle-fill me-2"></i> EMISIÓN DE CONSTANCIA SUSPENDIDA</h6>
+              <p class="mb-0 small text-dark">${escapeHtml(record.mensaje || 'La emisión de la constancia de trabajo para este expediente ha sido suspendida por la Dirección de Gestión de Talento Humano.')}</p>
+            </div>
+            <span class="badge bg-danger fs-6 px-3 py-2">EMISIÓN DESHABILITADA</span>
+          </div>
+        </div>
+      `;
+      gridResultadoCampos.appendChild(alertDiv);
+      if (btnGenerarPdfInd) {
+        btnGenerarPdfInd.classList.add('disabled');
+        btnGenerarPdfInd.title = 'Emisión suspendida';
+      }
+    } else {
+      if (btnGenerarPdfInd) {
+        btnGenerarPdfInd.classList.remove('disabled');
+        btnGenerarPdfInd.title = '';
+      }
+    }
+
     for (const [key, val] of Object.entries(record)) {
       if (key === '_rowIndex') continue;
 
@@ -1010,6 +1043,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isStatus) {
         const isActivo = String(val).toLowerCase().includes('activo');
         displayVal = `<span class="badge ${isActivo ? 'bg-success' : 'bg-secondary'} px-3 py-2 fs-6">${escapeHtml(val)}</span>`;
+      }
+
+      if (key.toLowerCase() === 'visible') {
+        const visBool = !(val === false || String(val).toUpperCase() === 'FALSE' || val === 0);
+        displayVal = `<span class="badge ${visBool ? 'bg-success' : 'bg-danger'} px-3 py-2 fs-6">${visBool ? 'TRUE (Habilitada)' : 'FALSE (Suspendida)'}</span>`;
       }
 
       colDiv.innerHTML = `
@@ -1208,11 +1246,23 @@ document.addEventListener('DOMContentLoaded', () => {
           minWidth = '140px';
         }
 
-        tdHtml += `
-          <td>
-            <input type="text" class="form-control form-control-sm cell-input" data-header="${escapeHtml(h)}" value="${escapeHtml(val)}" style="min-width: ${minWidth}; font-size: 0.83rem; padding: 0.25rem 0.4rem;">
-          </td>
-        `;
+        if (lowerH === 'visible') {
+          const visBool = !(val === false || String(val).toUpperCase() === 'FALSE' || val === 0);
+          tdHtml += `
+            <td>
+              <div class="d-flex align-items-center gap-1">
+                <span class="badge ${visBool ? 'bg-success' : 'bg-danger'} me-1">${visBool ? 'TRUE (Habilitada)' : 'FALSE (Suspendida)'}</span>
+                <input type="hidden" class="cell-input" data-header="${escapeHtml(h)}" value="${visBool ? 'TRUE' : 'FALSE'}">
+              </div>
+            </td>
+          `;
+        } else {
+          tdHtml += `
+            <td>
+              <input type="text" class="form-control form-control-sm cell-input" data-header="${escapeHtml(h)}" value="${escapeHtml(val)}" style="min-width: ${minWidth}; font-size: 0.83rem; padding: 0.25rem 0.4rem;">
+            </td>
+          `;
+        }
       });
 
       tr.innerHTML = tdHtml;
@@ -1829,6 +1879,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      const isVisible = !(emp.visible === false || String(emp.visible).toUpperCase() === 'FALSE' || emp.visible === 0);
+      if (!isVisible) {
+        hidePdfProgress();
+        showModalAlert(`⚠️ La emisión de constancia para este ciudadano se encuentra SUSPENDIDA.\n\nMotivo: ${emp.mensaje || 'Suspensión institucional de emisión de constancia de trabajo.'}`, 'danger', 'Emisión Suspendida');
+        return;
+      }
+
       showPdfProgress('Cargando Recursos...', 'Obteniendo membrete, logo y generando código QR...', 45);
 
       const nombre = emp.Nombre || '';
@@ -1839,15 +1896,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const remuneracionMensual = emp.RemuneracionMensual || '';
       const status = emp.Status || '';
 
-      const validez = (status === 'JUBILADO') ? "" : "Válido por 30 Días";
+      const esJubilado = String(status).toUpperCase().includes('JUBILAD') || String(categoriaReal).toUpperCase().includes('JUBILAD');
+      const validez = "Válido por 90 Días";
 
       const fechaEmision = new Date();
-      const fechaCaducidad = new Date(fechaEmision);
-      fechaCaducidad.setDate(fechaCaducidad.getDate() + 30);
+      const fechaCaducidad = new Date(fechaEmision.getTime() + 90 * 24 * 60 * 60 * 1000);
 
       const fechaEmisionStr = formatDateDDMMAAAA(fechaEmision);
       const fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidad);
-      const fechaCaducidadLetras = obtenerFechaCaducidadLetras(fechaCaducidad);
 
       const remuneracionNum = parseFloat(String(remuneracionMensual).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
       const remuneracionRedondeada = Number(remuneracionNum.toFixed(2));
@@ -1862,11 +1918,18 @@ document.addEventListener('DOMContentLoaded', () => {
         textoDescuento = ` Al trabajador se le realiza un descuento del 6% del IPASME.`;
       }
 
-      const textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, presta servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, desde el ${desdePDF}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
+      let textoCompleto = "";
+      if (esJubilado) {
+        textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, prestó servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
+      } else {
+        textoCompleto = `Quien suscribe, Directora de Gestión de Talento Humano de la Universidad Politécnica Territorial de Puerto Cabello a través del presente hace constar que el ciudadano (a) ${nombre}, Titular de la Cédula de Identidad No. ${cedula}, presta servicio en esta institución como miembro del personal ${cargoReal}, categoria ${categoriaReal}, desde el ${desdePDF}, percibiendo una remuneración mensual de: (${remuneracionFormateada}) en letras: ${remuneracionEnLetras}.${textoDescuento}`;
+      }
 
-      const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
+      const textoFechas = `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
 
-      const qrText = `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
+      const qrText = esJubilado ? 
+        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}` :
+        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
 
       const URL_IMAGEN_CABECERA = 'https://repouptpc.github.io/talento_humano/img/cabecera.png';
       const URL_IMAGEN_TALENTO = 'https://repouptpc.github.io/talento_humano/img/th.png';
@@ -2474,6 +2537,347 @@ document.addEventListener('DOMContentLoaded', () => {
       // Cerrar modal
       const modalEl = document.getElementById('modalCsvMasivo');
       const bsModal = bootstrap.Modal.getInstance(modalEl);
+      if (bsModal) bsModal.hide();
+    });
+  }
+
+  // --- LÓGICA DEL MODAL DE SUSPENSIÓN MASIVA DE CONSTANCIAS ---
+  const modalSuspensionEl = document.getElementById('modalSuspensionMasiva');
+  const contenedorSwitchesStatus = document.getElementById('contenedorSwitchesStatus');
+  const contenedorSwitchesCategoria = document.getElementById('contenedorSwitchesCategoria');
+  const selectMensajeSuspension = document.getElementById('selectMensajeSuspension');
+  const btnToggleNuevoMensaje = document.getElementById('btnToggleNuevoMensaje');
+  const btnCancelarNuevoMensaje = document.getElementById('btnCancelarNuevoMensaje');
+  const btnGuardarNuevoMensaje = document.getElementById('btnGuardarNuevoMensaje');
+  const boxNuevoMensaje = document.getElementById('boxNuevoMensaje');
+  const inputNuevoMensajeTexto = document.getElementById('inputNuevoMensajeTexto');
+  const btnAplicarSuspensionMasiva = document.getElementById('btnAplicarSuspensionMasiva');
+
+  let listaMensajesCache = [];
+
+  async function cargarMensajesSuspension() {
+    if (useDemoMode || !appScriptUrl) {
+      listaMensajesCache = [...demoMensajes];
+    } else {
+      try {
+        const res = await fetch(`${appScriptUrl}?action=getMensajes&usuario=${encodeURIComponent(appScriptUser)}&api_key=${encodeURIComponent(appScriptApiKey)}`);
+        const json = await res.json();
+        if (json.success && json.mensajes) {
+          listaMensajesCache = json.mensajes;
+        } else {
+          listaMensajesCache = [...demoMensajes];
+        }
+      } catch (e) {
+        listaMensajesCache = [...demoMensajes];
+      }
+    }
+    renderSelectMensajes();
+  }
+
+  function renderSelectMensajes(selectedId = null) {
+    if (!selectMensajeSuspension) return;
+    selectMensajeSuspension.innerHTML = '';
+
+    if (listaMensajesCache.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = "";
+      opt.textContent = "No hay mensajes registrados. Crea uno nuevo.";
+      selectMensajeSuspension.appendChild(opt);
+      return;
+    }
+
+    listaMensajesCache.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = `[ID: ${m.id}] ${m.mensaje}`;
+      if (selectedId && String(m.id) === String(selectedId)) {
+        opt.selected = true;
+      }
+      selectMensajeSuspension.appendChild(opt);
+    });
+  }
+
+  if (modalSuspensionEl) {
+    modalSuspensionEl.addEventListener('show.bs.modal', async () => {
+      await cargarMensajesSuspension();
+
+      // 1. Extraer Estatus únicos
+      const setStatus = new Set();
+      currentBulkData.forEach(r => {
+        const s = String(r.Status || '').trim();
+        if (s) setStatus.add(s.toUpperCase());
+      });
+      if (!setStatus.has('ACTIVO')) setStatus.add('ACTIVO');
+      if (!setStatus.has('JUBILADO')) setStatus.add('JUBILADO');
+
+      contenedorSwitchesStatus.innerHTML = '';
+      setStatus.forEach(st => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'form-check form-switch';
+        wrapper.innerHTML = `
+          <input class="form-check-input switch-status-filtro" type="checkbox" role="switch" id="switchSt_${escapeHtml(st)}" value="${escapeHtml(st)}" checked>
+          <label class="form-check-label fw-bold small text-dark" for="switchSt_${escapeHtml(st)}">${escapeHtml(st)}</label>
+        `;
+        contenedorSwitchesStatus.appendChild(wrapper);
+      });
+
+      // 2. Extraer Categorías únicas (combinando las de los datos + estándar institucionales)
+      const setCat = new Set();
+      currentBulkData.forEach(r => {
+        const c = String(r.Categoria || '').trim();
+        if (c) setCat.add(c.toUpperCase());
+      });
+
+      // Categorías estándar por si acaso no están todas en la muestra cargada
+      const categoriasEstandar = [
+        "ADMINISTRATIVO", "FUNCIONARIO DE CARRERA", "ADMINISTRATIVO JUBILADO", "ADMINISTRATIVO CONTRATADO",
+        "OBRERO FIJO", "OBRERO JUBILADO", "OBRERO", "OBRERO CONTRATADO",
+        "DOCENTE ORDINARIO", "DOCENTE CONTRATADO", "DOCENTE JUBILADO"
+      ];
+      categoriasEstandar.forEach(cat => setCat.add(cat));
+
+      contenedorSwitchesCategoria.innerHTML = '';
+      setCat.forEach(cat => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'form-check form-switch';
+        wrapper.innerHTML = `
+          <input class="form-check-input switch-cat-filtro" type="checkbox" role="switch" id="switchCat_${escapeHtml(cat)}" value="${escapeHtml(cat)}" checked>
+          <label class="form-check-label small text-dark" for="switchCat_${escapeHtml(cat)}">${escapeHtml(cat)}</label>
+        `;
+        contenedorSwitchesCategoria.appendChild(wrapper);
+      });
+
+      // 3. DINAMISMO: Vincular switches de Estatus con las Categorías correspondientes
+      const switchesStatus = document.querySelectorAll('.switch-status-filtro');
+      const switchesCategoria = document.querySelectorAll('.switch-cat-filtro');
+
+      switchesStatus.forEach(swSt => {
+        swSt.addEventListener('change', (e) => {
+          const stVal = e.target.value.toUpperCase();
+          const isChecked = e.target.checked;
+
+          switchesCategoria.forEach(swCat => {
+            const catVal = swCat.value.toUpperCase();
+            let esCoincidente = false;
+
+            if (stVal.includes('JUBILAD')) {
+              // Status JUBILADO -> afecta a categorías que contengan JUBILAD o estén registradas como Jubilado
+              if (catVal.includes('JUBILAD')) {
+                esCoincidente = true;
+              } else {
+                esCoincidente = currentBulkData.some(r =>
+                  String(r.Status || '').toUpperCase().includes('JUBILAD') &&
+                  String(r.Categoria || '').toUpperCase() === catVal
+                );
+              }
+            } else if (stVal.includes('ACTIV')) {
+              // Status ACTIVO -> afecta a categorías que NO contengan JUBILAD o registradas como Activo
+              if (!catVal.includes('JUBILAD')) {
+                esCoincidente = true;
+              } else {
+                esCoincidente = currentBulkData.some(r =>
+                  String(r.Status || '').toUpperCase().includes('ACTIV') &&
+                  String(r.Categoria || '').toUpperCase() === catVal
+                );
+              }
+            } else {
+              // Cualquier otro estatus -> verificar en datos
+              esCoincidente = currentBulkData.some(r =>
+                String(r.Status || '').toUpperCase() === stVal &&
+                String(r.Categoria || '').toUpperCase() === catVal
+              );
+            }
+
+            if (esCoincidente) {
+              swCat.checked = isChecked;
+            }
+          });
+        });
+      });
+    });
+  }
+
+  // Botones de Selección Rápida en Modal
+  const btnToggleAllStatusOn = document.getElementById('btnToggleAllStatusOn');
+  const btnToggleAllStatusOff = document.getElementById('btnToggleAllStatusOff');
+  const btnToggleAllCatOn = document.getElementById('btnToggleAllCatOn');
+  const btnToggleAllCatOff = document.getElementById('btnToggleAllCatOff');
+
+  if (btnToggleAllStatusOn) {
+    btnToggleAllStatusOn.addEventListener('click', () => {
+      document.querySelectorAll('.switch-status-filtro').forEach(sw => {
+        sw.checked = true;
+        sw.dispatchEvent(new Event('change'));
+      });
+    });
+  }
+  if (btnToggleAllStatusOff) {
+    btnToggleAllStatusOff.addEventListener('click', () => {
+      document.querySelectorAll('.switch-status-filtro').forEach(sw => {
+        sw.checked = false;
+        sw.dispatchEvent(new Event('change'));
+      });
+    });
+  }
+  if (btnToggleAllCatOn) {
+    btnToggleAllCatOn.addEventListener('click', () => {
+      document.querySelectorAll('.switch-cat-filtro').forEach(sw => sw.checked = true);
+    });
+  }
+  if (btnToggleAllCatOff) {
+    btnToggleAllCatOff.addEventListener('click', () => {
+      document.querySelectorAll('.switch-cat-filtro').forEach(sw => sw.checked = false);
+    });
+  }
+
+  if (btnToggleNuevoMensaje) {
+    btnToggleNuevoMensaje.addEventListener('click', () => {
+      boxNuevoMensaje.classList.remove('d-none');
+      inputNuevoMensajeTexto.focus();
+    });
+  }
+
+  if (btnCancelarNuevoMensaje) {
+    btnCancelarNuevoMensaje.addEventListener('click', () => {
+      boxNuevoMensaje.classList.add('d-none');
+      inputNuevoMensajeTexto.value = '';
+    });
+  }
+
+  if (btnGuardarNuevoMensaje) {
+    btnGuardarNuevoMensaje.addEventListener('click', async () => {
+      const txt = inputNuevoMensajeTexto.value.trim();
+      if (!txt) {
+        alert('Por favor ingresa el texto del nuevo mensaje.');
+        return;
+      }
+
+      btnGuardarNuevoMensaje.disabled = true;
+      btnGuardarNuevoMensaje.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+      try {
+        if (useDemoMode || !appScriptUrl) {
+          const newId = String(demoMensajes.length + 1);
+          const newMsgObj = { id: newId, mensaje: txt };
+          demoMensajes.push(newMsgObj);
+          listaMensajesCache.push(newMsgObj);
+          renderSelectMensajes(newId);
+          showModalAlert('✅ Nuevo mensaje registrado localmente.', 'success');
+        } else {
+          const json = await gasPost(appScriptUrl, {
+            action: 'addMensaje',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            mensaje: txt
+          });
+
+          if (json.success && json.mensaje) {
+            listaMensajesCache.push(json.mensaje);
+            renderSelectMensajes(json.mensaje.id);
+            showModalAlert('✅ Nuevo mensaje guardado exitosamente.', 'success');
+          } else {
+            const newId = String(listaMensajesCache.length + 1);
+            const newMsgObj = { id: newId, mensaje: txt };
+            listaMensajesCache.push(newMsgObj);
+            renderSelectMensajes(newId);
+            showModalAlert('✅ Mensaje agregado a la sesión.', 'info');
+          }
+        }
+        boxNuevoMensaje.classList.add('d-none');
+        inputNuevoMensajeTexto.value = '';
+      } catch (e) {
+        alert('Error al guardar mensaje: ' + e.message);
+      } finally {
+        btnGuardarNuevoMensaje.disabled = false;
+        btnGuardarNuevoMensaje.innerHTML = '<i class="bi bi-save me-1"></i> Guardar Nuevo Mensaje';
+      }
+    });
+  }
+
+  if (btnAplicarSuspensionMasiva) {
+    btnAplicarSuspensionMasiva.addEventListener('click', async () => {
+      const selectedStatuses = Array.from(document.querySelectorAll('.switch-status-filtro:checked')).map(el => el.value.toUpperCase());
+      const selectedCategories = Array.from(document.querySelectorAll('.switch-cat-filtro:checked')).map(el => el.value.toUpperCase());
+
+      if (selectedStatuses.length === 0) {
+        showModalAlert('⚠️ Debes seleccionar al menos un Estatus para aplicar la suspensión.', 'warning');
+        return;
+      }
+      if (selectedCategories.length === 0) {
+        showModalAlert('⚠️ Debes seleccionar al menos una Categoría para aplicar la suspensión.', 'warning');
+        return;
+      }
+
+      const radioAccion = document.querySelector('input[name="radioAccionSuspension"]:checked')?.value || 'suspender';
+      const esSuspender = (radioAccion === 'suspender');
+
+      const selectedIdMensaje = selectMensajeSuspension ? selectMensajeSuspension.value : null;
+      const mensajeObj = listaMensajesCache.find(m => String(m.id) === String(selectedIdMensaje));
+      const textoMensaje = mensajeObj ? mensajeObj.mensaje : "";
+
+      if (esSuspender && !selectedIdMensaje) {
+        showModalAlert('⚠️ Debes seleccionar o crear un mensaje de suspensión.', 'warning');
+        return;
+      }
+
+      let afectadosCount = 0;
+      const rowsToUpdate = [];
+
+      currentBulkData.forEach((row) => {
+        const rowStatus = String(row.Status || '').trim().toUpperCase();
+        const rowCat = String(row.Categoria || '').trim().toUpperCase();
+
+        const matchStatus = selectedStatuses.some(st => rowStatus.includes(st) || st.includes(rowStatus));
+        const matchCat = selectedCategories.some(cat => rowCat.includes(cat) || cat.includes(rowCat));
+
+        if (matchStatus && matchCat) {
+          row.visible = !esSuspender;
+          row.id_mensaje = esSuspender ? selectedIdMensaje : null;
+          row.mensaje = esSuspender ? textoMensaje : "";
+
+          const rIndex = row._rowIndex;
+          if (rIndex) modifiedRows.add(rIndex);
+
+          afectadosCount++;
+          rowsToUpdate.push({
+            rowIndex: rIndex,
+            data: {
+              visible: !esSuspender ? "TRUE" : "FALSE",
+              id_mensaje: esSuspender ? selectedIdMensaje : ""
+            }
+          });
+        }
+      });
+
+      if (afectadosCount === 0) {
+        showModalAlert('ℹ️ No se encontraron registros que coincidan con el Estatus y Categorías seleccionados.', 'info');
+        return;
+      }
+
+      if (!useDemoMode && appScriptUrl && rowsToUpdate.length > 0) {
+        btnAplicarSuspensionMasiva.disabled = true;
+        btnAplicarSuspensionMasiva.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando en servidor...';
+        try {
+          await gasPost(appScriptUrl, {
+            action: 'updateBulk',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            rows: rowsToUpdate
+          });
+        } catch (err) {
+          console.error("Error al actualizar suspensión en servidor:", err);
+        } finally {
+          btnAplicarSuspensionMasiva.disabled = false;
+          btnAplicarSuspensionMasiva.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Aplicar a Registros Seleccionados';
+        }
+      }
+
+      renderTablaMasiva(currentBulkData);
+
+      const accionTexto = esSuspender ? "SUSPENDIDO" : "HABILITADO";
+      showModalAlert(`✅ Se ha ${accionTexto} exitosamente la emisión de constancias para ${afectadosCount} registro(s).`, 'success');
+
+      const bsModal = bootstrap.Modal.getInstance(modalSuspensionEl);
       if (bsModal) bsModal.hide();
     });
   }

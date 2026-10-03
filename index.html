@@ -180,6 +180,9 @@
               <a href="https://docs.google.com/spreadsheets/d/1EJNUbC_dWZXcCCOHMkmEaq5uXsEhalCcqWFbiGYVDaY/edit?usp=sharing" target="_blank" class="btn btn-outline-light btn-sm fw-bold" title="Abrir Google Sheets en vivo (Solo correos institucionales)">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i> Abrir Google Sheets
               </a>
+              <button class="btn btn-danger btn-sm fw-bold text-white shadow-sm" id="btnAbrirModalSuspensionMasiva" data-bs-toggle="modal" data-bs-target="#modalSuspensionMasiva">
+                <i class="bi bi-slash-circle me-1"></i> SUSPENDER EMISIÓN DE CONSTANCIAS DE TRABAJO
+              </button>
               <button class="btn btn-info text-white btn-sm fw-bold" id="btnAbrirModalCsv" data-bs-toggle="modal" data-bs-target="#modalCsvMasivo">
                 <i class="bi bi-filetype-csv me-1"></i> Edición / Carga CSV
               </button>
@@ -218,6 +221,7 @@
                     <th>RemuneracionMensual</th>
                     <th>Codigo</th>
                     <th>Status</th>
+                    <th>Emisión / Visible</th>
                   </tr>
                 </thead>
                 <tbody id="bodyTablaMasiva">
@@ -567,6 +571,114 @@ VER EN ARCHIVO `Code.gs` PARA EL CÓDIGO COMPLETO DEL BACKEND DE APPS SCRIPT
           <button type="button" class="btn btn-primary fw-bold" id="btnGuardarEdicionIndividual">
             <span class="spinner-border spinner-border-sm me-2 d-none" id="spinnerGuardarInd"></span>
             <i class="bi bi-check-circle me-1"></i> Guardar Cambios en Google Sheets
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SUSPENSIÓN DE EMISIÓN DE CONSTANCIAS (MASIVA) -->
+  <div class="modal fade" id="modalSuspensionMasiva" tabindex="-1" aria-labelledby="modalSuspensionMasivaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white py-3">
+          <h5 class="modal-title fw-bold" id="modalSuspensionMasivaLabel">
+            <i class="bi bi-slash-circle me-2"></i>Suspender / Habilitar Emisión de Constancias de Trabajo
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">
+            Selecciona el Estatus y las Categorías a las cuales se aplicará la modificación de disponibilidad de constancias de trabajo en el sistema.
+          </p>
+
+          <!-- SECCIÓN 1: STATUS -->
+          <div class="card mb-3 border-secondary border-opacity-25">
+            <div class="card-header bg-light fw-bold text-dark py-2 d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-person-badge me-1 text-primary"></i> 1. Filtrar por Estatus (Status)</span>
+              <div>
+                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-bold me-2" id="btnToggleAllStatusOn">Marcar Todos</button>
+                <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" id="btnToggleAllStatusOff">Desmarcar Todos</button>
+              </div>
+            </div>
+            <div class="card-body py-2 px-3">
+              <div class="d-flex flex-wrap gap-4" id="contenedorSwitchesStatus">
+                <!-- Se genera dinámicamente con JS (ej. ACTIVOS, JUBILADOS) -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 2: CATEGORÍA -->
+          <div class="card mb-3 border-secondary border-opacity-25">
+            <div class="card-header bg-light fw-bold text-dark py-2 d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-tags me-1 text-primary"></i> 2. Filtrar por Categoría (Categoria)</span>
+              <div>
+                <button type="button" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-bold me-2" id="btnToggleAllCatOn">Marcar Todas</button>
+                <button type="button" class="btn btn-link btn-sm p-0 text-muted text-decoration-none" id="btnToggleAllCatOff">Desmarcar Todas</button>
+              </div>
+            </div>
+            <div class="card-body py-2 px-3">
+              <div class="d-flex flex-wrap gap-3" id="contenedorSwitchesCategoria">
+                <!-- Se genera dinámicamente con JS (ej. OBREROS, ADMINISTRATIVOS, FUNCIONARIO DE CARRERA) -->
+              </div>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 3: ACCIÓN & MENSAJE -->
+          <div class="card border-danger border-opacity-25 bg-light">
+            <div class="card-header bg-danger bg-opacity-10 fw-bold text-danger py-2">
+              <i class="bi bi-chat-left-text me-1"></i> 3. Acción y Mensaje de Suspensión
+            </div>
+            <div class="card-body py-3">
+              <div class="mb-3">
+                <label class="form-label fw-bold small">Acción a Aplicar:</label>
+                <div class="d-flex gap-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="radioAccionSuspension" id="radioAccionSuspender" value="suspender" checked>
+                    <label class="form-check-label fw-bold text-danger" for="radioAccionSuspender">
+                      <i class="bi bi-slash-circle me-1"></i> SUSPENDER Emisión (visible = FALSE)
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="radioAccionSuspension" id="radioAccionHabilitar" value="habilitar">
+                    <label class="form-check-label fw-bold text-success" for="radioAccionHabilitar">
+                      <i class="bi bi-check-circle me-1"></i> HABILITAR Emisión (visible = TRUE)
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div id="boxMensajeSeleccion">
+                <label for="selectMensajeSuspension" class="form-label fw-bold small">Mensaje de Suspensión (Tabla Mensaje):</label>
+                <div class="input-group mb-2">
+                  <select class="form-select" id="selectMensajeSuspension">
+                    <!-- Se llena con JS -->
+                  </select>
+                  <button class="btn btn-outline-danger fw-bold" type="button" id="btnToggleNuevoMensaje">
+                    <i class="bi bi-plus-lg me-1"></i> Nuevo Mensaje
+                  </button>
+                </div>
+              </div>
+
+              <div id="boxNuevoMensaje" class="mt-2 d-none p-3 bg-white border rounded">
+                <label for="inputNuevoMensajeTexto" class="form-label fw-bold small text-danger">Texto del Nuevo Mensaje:</label>
+                <textarea class="form-control mb-2" id="inputNuevoMensajeTexto" rows="2" placeholder="Ej: Emisión suspendida temporalmente por actualización de datos institucionales."></textarea>
+                <div class="text-end">
+                  <button class="btn btn-sm btn-secondary me-1" type="button" id="btnCancelarNuevoMensaje">Cancelar</button>
+                  <button class="btn btn-sm btn-danger fw-bold" type="button" id="btnGuardarNuevoMensaje">
+                    <i class="bi bi-save me-1"></i> Guardar Nuevo Mensaje
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger fw-bold px-4" id="btnAplicarSuspensionMasiva">
+            <i class="bi bi-check2-circle me-1"></i> Aplicar a Registros Seleccionados
           </button>
         </div>
       </div>
