@@ -560,10 +560,52 @@
                             </div>
                         `;
                     } else {
+                        let estadoConstancia = 'NUEVA';
+                        let estadoColor = 'primary';
+                        let estadoIcon = 'bi-info-circle';
+                        let estadoTexto = 'Empleado Encontrado (Requiere Generar)';
+                        let botonHtml = '';
+                        
+                        if (emp.fecha_emision && emp.fecha_vencimiento) {
+                            const fechaVencParsed = parseFechaStandard(emp.fecha_vencimiento);
+                            const hoy = new Date();
+                            hoy.setHours(0,0,0,0);
+                            
+                            if (fechaVencParsed) {
+                                fechaVencParsed.setHours(0,0,0,0);
+                                if (fechaVencParsed.getTime() >= hoy.getTime()) {
+                                    estadoConstancia = 'VIGENTE';
+                                    estadoColor = 'success';
+                                    estadoIcon = 'bi-check-circle-fill';
+                                    estadoTexto = 'Constancia Válida y Vigente';
+                                } else {
+                                    estadoConstancia = 'VENCIDA';
+                                    estadoColor = 'danger';
+                                    estadoIcon = 'bi-exclamation-triangle-fill';
+                                    estadoTexto = 'Constancia Vencida';
+                                }
+                            }
+                        }
+                        
+                        if (estadoConstancia === 'VIGENTE') {
+                            botonHtml = `
+                                <button class="btn btn-success btn-lg fw-bold shadow-sm" onclick="generarPDF('${emp.Codigo}')">
+                                    <i class="bi bi-file-earmark-text me-1"></i> Descargar Constancia PDF (Vigente)
+                                </button>
+                            `;
+                        } else {
+                            // VENCIDA o NUEVA
+                            botonHtml = `
+                                <button class="btn btn-${estadoConstancia === 'VENCIDA' ? 'warning' : 'success'} btn-lg fw-bold shadow-sm" onclick="generarPDF('${emp.Codigo}', true)">
+                                    <i class="bi bi-file-earmark-text me-1"></i> ${estadoConstancia === 'VENCIDA' ? 'Renovar Constancia (Generar Nuevo Código)' : 'Generar Constancia Bancaria PDF'}
+                                </button>
+                            `;
+                        }
+
                         resultadosDiv.innerHTML = `
-                            <div class="card mt-3 border-success">
+                            <div class="card mt-3 border-${estadoColor}">
                                 <div class="card-body">
-                                    <h2 class="card-title text-success fs-4 fw-bold">Empleado Encontrado</h2>
+                                    <h2 class="card-title text-${estadoColor} fs-4 fw-bold mb-3"><i class="bi ${estadoIcon} me-2"></i> ${estadoTexto}</h2>
                                     <p class="card-text mb-1"><strong>Nombre:</strong> ${emp.Nombre || ''}</p>
                                     <p class="card-text mb-1"><strong>Cédula:</strong> ${emp.Cedula || ''}</p>
                                     <p class="card-text mb-1"><strong>Categoría:</strong> ${categoriaReal || ''}</p>
@@ -571,12 +613,11 @@
                                     <p class="card-text mb-1"><strong>Desde:</strong> ${desdeFmt}</p>
                                     <p class="card-text mb-1"><strong>Remuneración Mensual:</strong> ${remFmt}</p>
                                     <p class="card-text mb-1"><strong>Serial:</strong> ${emp.Codigo || ''}</p>
+                                    ${emp.fecha_vencimiento ? `<p class="card-text mb-1"><strong>Vencimiento:</strong> ${emp.fecha_vencimiento}</p>` : ''}
                                 </div>
                             </div>
                             <div class="d-grid gap-2 mt-3">
-                                <button class="btn btn-success btn-lg fw-bold shadow-sm" onclick="generarPDF('${emp.Codigo}')">
-                                    <i class="bi bi-file-earmark-text me-1"></i> Generar Constancia Bancaria PDF
-                                </button>
+                                ${botonHtml}
                             </div>
                         `;
                     }
@@ -683,7 +724,18 @@
 
         let ultimoEmpleadoEncontrado = null;
 
-        async function generarPDF(codigo) {
+        function generarCodigoAlfanumerico() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const num = '0123456789';
+            let r1 = '', r2 = '', n1 = '', n2 = '';
+            for (let i = 0; i < 3; i++) r1 += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 4; i++) n1 += num.charAt(Math.floor(Math.random() * num.length));
+            for (let i = 0; i < 3; i++) r2 += chars.charAt(Math.floor(Math.random() * chars.length));
+            for (let i = 0; i < 4; i++) n2 += num.charAt(Math.floor(Math.random() * num.length));
+            return `${r1}${n1}${r2}${n2}`;
+        }
+
+        async function generarPDF(codigo, renovar = false) {
             showPdfProgress('Iniciando Generación de PDF...', 'Consultando información del expediente...', 15);
 
             try {
@@ -722,20 +774,37 @@
                 const diasVigencia = esJubilado ? 90 : 30;
                 const validez = `Válido por ${diasVigencia} Días`;
 
-                const fechaEmision = new Date();
-                const fechaCaducidad = new Date(fechaEmision.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
+                let fechaEmisionStr = empleadoEncontrado.fecha_emision || '';
+                let fechaCaducidadStr = empleadoEncontrado.fecha_vencimiento || '';
+                let codigoActual = empleadoEncontrado.Codigo || codigo;
 
-                const fechaEmisionStr = formatDateDDMMAAAA(fechaEmision);
-                const fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidad);
+                let fechaEmisionParsed = new Date();
+                let fechaCaducidadParsed = new Date(fechaEmisionParsed.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
 
-                // Guardar las fechas de emisión y vencimiento en el backend
-                empleadoEncontrado.fecha_emision = fechaEmisionStr;
-                empleadoEncontrado.fecha_vencimiento = fechaCaducidadStr;
+                if (renovar || !fechaEmisionStr || !fechaCaducidadStr) {
+                    fechaEmisionParsed = new Date();
+                    fechaCaducidadParsed = new Date(fechaEmisionParsed.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
 
-                try {
-                    fetch(`${GOOGLE_SCRIPT_URL}?action=saveFechasEmision&cedula=${encodeURIComponent(cedula)}&fecha_emision=${encodeURIComponent(fechaEmisionStr)}&fecha_vencimiento=${encodeURIComponent(fechaCaducidadStr)}`)
-                        .catch(e => console.error("Error guardando fechas:", e));
-                } catch(e) {}
+                    fechaEmisionStr = formatDateDDMMAAAA(fechaEmisionParsed);
+                    fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidadParsed);
+                    
+                    if (renovar || !codigoActual || codigoActual === 'N/A') {
+                        codigoActual = generarCodigoAlfanumerico();
+                    }
+
+                    // Guardar las fechas de emisión y vencimiento (y código) en el backend
+                    empleadoEncontrado.fecha_emision = fechaEmisionStr;
+                    empleadoEncontrado.fecha_vencimiento = fechaCaducidadStr;
+                    empleadoEncontrado.Codigo = codigoActual;
+
+                    try {
+                        fetch(`${GOOGLE_SCRIPT_URL}?action=saveFechasEmision&cedula=${encodeURIComponent(cedula)}&fecha_emision=${encodeURIComponent(fechaEmisionStr)}&fecha_vencimiento=${encodeURIComponent(fechaCaducidadStr)}&codigo=${encodeURIComponent(codigoActual)}`)
+                            .catch(e => console.error("Error guardando fechas:", e));
+                    } catch(e) {}
+                } else {
+                    fechaEmisionParsed = parseFechaStandard(fechaEmisionStr) || new Date();
+                    fechaCaducidadParsed = parseFechaStandard(fechaCaducidadStr) || new Date();
+                }
 
                 const remuneracionNum = parseFloat(String(remuneracionMensual ?? '0').replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
                 const remuneracionRedondeada = Number(remuneracionNum.toFixed(2));
@@ -758,13 +827,13 @@
                 }
 
                 const textoFechas = esJubilado ?
-                    `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.` :
-                    `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
+                    `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionParsed.getDate()} DÍAS DEL MES DE ${fechaEmisionParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmisionParsed.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadParsed.getDate()} DE ${fechaCaducidadParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidadParsed.getFullYear()}.` :
+                    `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionParsed.getDate()} DÍAS DEL MES DE ${fechaEmisionParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmisionParsed.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadParsed.getDate()} DE ${fechaCaducidadParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidadParsed.getFullYear()}.`;
 
                 const qrText = esJubilado ?
-                    `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}` :
-                    `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
-                const qrCacheKey = 'qr_' + codigo;
+                    `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigoActual}` :
+                    `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigoActual}`;
+                const qrCacheKey = 'qr_' + codigoActual;
 
                 const [imagenCabeceraBase64, imagenTalentoBase64] = await Promise.all([
                     cargarImagenDesdeURL(URL_IMAGEN_CABECERA),

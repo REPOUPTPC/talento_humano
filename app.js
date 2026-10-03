@@ -1900,30 +1900,61 @@ document.addEventListener('DOMContentLoaded', () => {
       const diasVigencia = esJubilado ? 90 : 30;
       const validez = `Válido por ${diasVigencia} Días`;
 
-      const fechaEmision = new Date();
-      const fechaCaducidad = new Date(fechaEmision.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
+      let fechaEmisionStr = emp.fecha_emision || '';
+      let fechaCaducidadStr = emp.fecha_vencimiento || '';
+      let codigoActual = emp.Codigo || codigo;
 
-      const fechaEmisionStr = formatDateDDMMAAAA(fechaEmision);
-      const fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidad);
+      let fechaEmisionParsed = new Date();
+      let fechaCaducidadParsed = new Date(fechaEmisionParsed.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
+      
+      let expired = false;
+      if (fechaCaducidadStr) {
+          const vParsed = parseFechaStandard(fechaCaducidadStr);
+          if (vParsed) {
+              vParsed.setHours(0,0,0,0);
+              const h = new Date();
+              h.setHours(0,0,0,0);
+              if (vParsed.getTime() < h.getTime()) {
+                  expired = true;
+              }
+          }
+      }
 
-      // Guardar fechas en el objeto local y sincronizar con backend/Google Sheets
-      emp.fecha_emision = fechaEmisionStr;
-      emp.fecha_vencimiento = fechaCaducidadStr;
+      if (!fechaEmisionStr || !fechaCaducidadStr || expired) {
+        fechaEmisionParsed = new Date();
+        fechaCaducidadParsed = new Date(fechaEmisionParsed.getTime() + diasVigencia * 24 * 60 * 60 * 1000);
 
-      if (!useDemoMode && appScriptUrl) {
-        try {
-          gasPost(appScriptUrl, {
-            action: 'updateRow',
-            usuario: appScriptUser,
-            api_key: appScriptApiKey,
-            rowIndex: emp._rowIndex,
-            data: {
-              Cedula: emp.Cedula,
-              fecha_emision: fechaEmisionStr,
-              fecha_vencimiento: fechaCaducidadStr
-            }
-          }).catch(e => console.error("Error guardando fechas:", e));
-        } catch (e) {}
+        fechaEmisionStr = formatDateDDMMAAAA(fechaEmisionParsed);
+        fechaCaducidadStr = formatDateDDMMAAAA(fechaCaducidadParsed);
+
+        if (!codigoActual || codigoActual === 'N/A' || expired) {
+           codigoActual = generarCodigoAlfanumerico();
+        }
+
+        // Guardar fechas en el objeto local y sincronizar con backend/Google Sheets
+        emp.fecha_emision = fechaEmisionStr;
+        emp.fecha_vencimiento = fechaCaducidadStr;
+        emp.Codigo = codigoActual;
+
+        if (!useDemoMode && appScriptUrl) {
+          try {
+            gasPost(appScriptUrl, {
+              action: 'updateRow',
+              usuario: appScriptUser,
+              api_key: appScriptApiKey,
+              rowIndex: emp._rowIndex,
+              data: {
+                Cedula: emp.Cedula,
+                fecha_emision: fechaEmisionStr,
+                fecha_vencimiento: fechaCaducidadStr,
+                Codigo: codigoActual
+              }
+            }).catch(e => console.error("Error guardando fechas:", e));
+          } catch (e) {}
+        }
+      } else {
+        fechaEmisionParsed = parseFechaStandard(fechaEmisionStr) || new Date();
+        fechaCaducidadParsed = parseFechaStandard(fechaCaducidadStr) || new Date();
       }
 
       const remuneracionNum = parseFloat(String(remuneracionMensual).replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
@@ -1947,12 +1978,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const textoFechas = esJubilado ?
-        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.` :
-        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmision.getDate()} DÍAS DEL MES DE ${fechaEmision.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmision.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidad.getDate()} DE ${fechaCaducidad.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidad.getFullYear()}.`;
+        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionParsed.getDate()} DÍAS DEL MES DE ${fechaEmisionParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmisionParsed.getFullYear().toString()}. La presente constancia tiene una vigencia de (90) NOVENTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadParsed.getDate()} DE ${fechaCaducidadParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidadParsed.getFullYear()}.` :
+        `Constancia que se expide a solicitud de la parte interesada en la ciudad de PUERTO CABELLO, a los ${fechaEmisionParsed.getDate()} DÍAS DEL MES DE ${fechaEmisionParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaEmisionParsed.getFullYear().toString()}. La presente constancia tiene una vigencia de (30)TREINTA DÍAS contados a partir de su fecha de emisión, siendo válida hasta el ${fechaCaducidadParsed.getDate()} DE ${fechaCaducidadParsed.toLocaleString('es-ES', { month: 'long' }).toUpperCase()} DE ${fechaCaducidadParsed.getFullYear()}.`;
 
       const qrText = esJubilado ? 
-        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}` :
-        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigo}`;
+        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nEstatus: ${status}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigoActual}` :
+        `Nombre: ${nombre}\nCédula: ${cedula}\nCategoría: ${categoriaReal}\nCargo: ${cargoReal}\nDesde: ${desdePDF}\nEmisión: ${fechaEmisionStr}\nHasta: ${fechaCaducidadStr}\nRemuneración: ${remuneracionFormateada}\nSerial: ${codigoActual}`;
 
       const URL_IMAGEN_CABECERA = 'https://repouptpc.github.io/talento_humano/img/cabecera.png';
       const URL_IMAGEN_TALENTO = 'https://repouptpc.github.io/talento_humano/img/th.png';
