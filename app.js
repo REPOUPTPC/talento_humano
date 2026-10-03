@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const textErrorMsg = document.getElementById('textErrorMsg');
   const btnEditarIndividual = document.getElementById('btnEditarIndividual');
   const btnGenerarPdfInd = document.getElementById('btnGenerarPdfInd');
+  const btnToggleSuspensionInd = document.getElementById('btnToggleSuspensionInd');
 
   const modalEdicionIndividual = new bootstrap.Modal(document.getElementById('modalEdicionIndividual'));
   const formEdicionIndividual = document.getElementById('formEdicionIndividual');
@@ -135,6 +136,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGuardarEdicionIndividual = document.getElementById('btnGuardarEdicionIndividual');
   const spinnerGuardarInd = document.getElementById('spinnerGuardarInd');
   const editRowIndexInput = document.getElementById('editRowIndex');
+
+  const modalSuspensionIndividualEl = document.getElementById('modalSuspensionIndividual');
+  const modalSuspensionIndividual = modalSuspensionIndividualEl ? new bootstrap.Modal(modalSuspensionIndividualEl) : null;
+  const selectMensajeSuspensionInd = document.getElementById('selectMensajeSuspensionInd');
+  const inputNuevoMensajeInd = document.getElementById('inputNuevoMensajeInd');
+  const btnGuardarMensajeInd = document.getElementById('btnGuardarMensajeInd');
+  const btnConfirmarSuspensionInd = document.getElementById('btnConfirmarSuspensionInd');
+  const spinnerSuspensionInd = document.getElementById('spinnerSuspensionInd');
+  const indSuspensionNombreCedula = document.getElementById('indSuspensionNombreCedula');
 
   const btnCargarMasivo = document.getElementById('btnCargarMasivo');
   const btnGuardarMasivo = document.getElementById('btnGuardarMasivo');
@@ -999,6 +1009,20 @@ document.addEventListener('DOMContentLoaded', () => {
     gridResultadoCampos.innerHTML = '';
 
     const isVisible = !(record.visible === false || String(record.visible).toUpperCase() === 'FALSE' || record.visible === 0);
+
+    if (btnToggleSuspensionInd) {
+      btnToggleSuspensionInd.classList.remove('d-none');
+      if (!isVisible) {
+        btnToggleSuspensionInd.className = 'btn btn-warning btn-sm fw-bold shadow-sm text-dark';
+        btnToggleSuspensionInd.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Habilitar Constancia';
+        btnToggleSuspensionInd.title = 'Levantar la suspensión de emisión para este expediente';
+      } else {
+        btnToggleSuspensionInd.className = 'btn btn-outline-danger btn-sm fw-bold';
+        btnToggleSuspensionInd.innerHTML = '<i class="bi bi-slash-circle me-1"></i> Suspender Constancia';
+        btnToggleSuspensionInd.title = 'Suspender la emisión de constancia para este expediente de forma individual';
+      }
+    }
+
     if (!isVisible) {
       const alertDiv = document.createElement('div');
       alertDiv.className = 'col-12 mb-2';
@@ -1009,11 +1033,23 @@ document.addEventListener('DOMContentLoaded', () => {
               <h6 class="fw-bold mb-1 text-danger"><i class="bi bi-slash-circle-fill me-2"></i> EMISIÓN DE CONSTANCIA SUSPENDIDA</h6>
               <p class="mb-0 small text-dark">${escapeHtml(record.mensaje || 'La emisión de la constancia de trabajo para este expediente ha sido suspendida por la Dirección de Gestión de Talento Humano.')}</p>
             </div>
-            <span class="badge bg-danger fs-6 px-3 py-2">EMISIÓN DESHABILITADA</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-danger fs-6 px-3 py-2">EMISIÓN DESHABILITADA</span>
+              <button type="button" class="btn btn-sm btn-light text-danger fw-bold border border-danger shadow-sm" id="btnBannerLevantarSuspension">
+                <i class="bi bi-unlock-fill me-1"></i> Levantar Suspensión
+              </button>
+            </div>
           </div>
         </div>
       `;
       gridResultadoCampos.appendChild(alertDiv);
+      setTimeout(() => {
+        const btnBanner = document.getElementById('btnBannerLevantarSuspension');
+        if (btnBanner) {
+          btnBanner.addEventListener('click', () => levantarSuspensionIndividual());
+        }
+      }, 0);
+
       if (btnGenerarPdfInd) {
         btnGenerarPdfInd.classList.add('disabled');
         btnGenerarPdfInd.title = 'Emisión suspendida';
@@ -1058,6 +1094,244 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       gridResultadoCampos.appendChild(colDiv);
     }
+  }
+
+  // --- CONTROL DE SUSPENSIÓN INDIVIDUAL ---
+  if (btnToggleSuspensionInd) {
+    btnToggleSuspensionInd.addEventListener('click', () => {
+      if (!currentIndividualRecord) return;
+      const isVisible = !(currentIndividualRecord.visible === false || String(currentIndividualRecord.visible).toUpperCase() === 'FALSE' || currentIndividualRecord.visible === 0);
+      if (!isVisible) {
+        levantarSuspensionIndividual();
+      } else {
+        abrirModalSuspensionIndividual();
+      }
+    });
+  }
+
+  async function levantarSuspensionIndividual() {
+    if (!currentIndividualRecord) return;
+
+    const nombre = currentIndividualRecord.Nombre || currentIndividualRecord.nombre || 'Trabajador';
+    const cedula = currentIndividualRecord.Cedula || currentIndividualRecord.cedula || currentIndividualRecord.Documento || '';
+
+    if (!confirm(`¿Está seguro de levantar la suspensión y HABILITAR la emisión de constancia para:\n\n${nombre} (Cédula: ${cedula})?`)) {
+      return;
+    }
+
+    const rowIndex = parseInt(currentIndividualRecord._rowIndex, 10);
+
+    if (btnToggleSuspensionInd) {
+      btnToggleSuspensionInd.disabled = true;
+      btnToggleSuspensionInd.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Procesando...';
+    }
+
+    try {
+      if (useDemoMode || !appScriptUrl) {
+        currentIndividualRecord.visible = true;
+        currentIndividualRecord.id_mensaje = null;
+        currentIndividualRecord.mensaje = "";
+
+        const matchIdx = demoDatabase.findIndex(r => r._rowIndex === rowIndex || (r.Cedula && r.Cedula === currentIndividualRecord.Cedula));
+        if (matchIdx !== -1) {
+          demoDatabase[matchIdx].visible = true;
+          demoDatabase[matchIdx].id_mensaje = null;
+          demoDatabase[matchIdx].mensaje = "";
+        }
+        renderIndividualResult(currentIndividualRecord);
+        showModalAlert(`✅ Suspensión levantada exitosamente. La emisión de constancia para ${nombre} ha sido HABILITADA (Modo Demostración).`, 'success');
+      } else {
+        const json = await gasPost(appScriptUrl, {
+          action: 'updateRow',
+          usuario: appScriptUser,
+          api_key: appScriptApiKey,
+          rowIndex: rowIndex,
+          data: {
+            visible: "TRUE",
+            id_mensaje: ""
+          }
+        });
+
+        if (json.success) {
+          currentIndividualRecord.visible = true;
+          currentIndividualRecord.id_mensaje = null;
+          currentIndividualRecord.mensaje = "";
+          renderIndividualResult(currentIndividualRecord);
+          showModalAlert(`✅ Suspensión levantada exitosamente. La emisión de constancia para ${nombre} ha sido HABILITADA en Google Sheets.`, 'success');
+        } else {
+          showModalAlert('❌ Error al levantar suspensión: ' + (json.error || json.message), 'danger');
+        }
+      }
+    } catch (err) {
+      showModalAlert('❌ Error al procesar solicitud: ' + err.message, 'danger');
+    } finally {
+      if (btnToggleSuspensionInd) {
+        btnToggleSuspensionInd.disabled = false;
+      }
+    }
+  }
+
+  async function abrirModalSuspensionIndividual() {
+    if (!currentIndividualRecord) return;
+
+    const nombre = currentIndividualRecord.Nombre || currentIndividualRecord.nombre || 'Trabajador';
+    const cedula = currentIndividualRecord.Cedula || currentIndividualRecord.cedula || currentIndividualRecord.Documento || 'N/A';
+
+    if (indSuspensionNombreCedula) {
+      indSuspensionNombreCedula.innerHTML = `<i class="bi bi-person-fill text-primary me-2"></i>${escapeHtml(nombre)} <span class="text-muted ms-2">(Cédula: ${escapeHtml(cedula)})</span>`;
+    }
+
+    await cargarMensajesSuspension();
+    renderSelectMensajesInd();
+
+    if (modalSuspensionIndividual) {
+      modalSuspensionIndividual.show();
+    }
+  }
+
+  function renderSelectMensajesInd(selectedId = null) {
+    if (!selectMensajeSuspensionInd) return;
+    selectMensajeSuspensionInd.innerHTML = '';
+
+    if (listaMensajesCache.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = "";
+      opt.textContent = "No hay mensajes registrados. Crea uno nuevo abajo.";
+      selectMensajeSuspensionInd.appendChild(opt);
+      return;
+    }
+
+    listaMensajesCache.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = `[ID: ${m.id}] ${m.mensaje}`;
+      if (selectedId && String(m.id) === String(selectedId)) {
+        opt.selected = true;
+      }
+      selectMensajeSuspensionInd.appendChild(opt);
+    });
+  }
+
+  if (btnGuardarMensajeInd) {
+    btnGuardarMensajeInd.addEventListener('click', async () => {
+      const txt = inputNuevoMensajeInd.value.trim();
+      if (!txt) {
+        showModalAlert('⚠️ Escribe el texto del motivo de suspensión.', 'warning');
+        return;
+      }
+
+      btnGuardarMensajeInd.disabled = true;
+      btnGuardarMensajeInd.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+      try {
+        if (useDemoMode || !appScriptUrl) {
+          const newId = String(demoMensajes.length + 1);
+          const newMsgObj = { id: newId, mensaje: txt };
+          demoMensajes.push(newMsgObj);
+          listaMensajesCache.push(newMsgObj);
+          renderSelectMensajesInd(newId);
+          renderSelectMensajes(newId);
+          inputNuevoMensajeInd.value = '';
+          showModalAlert('✅ Nuevo motivo de suspensión registrado.', 'success');
+        } else {
+          const json = await gasPost(appScriptUrl, {
+            action: 'addMensaje',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            mensaje: txt
+          });
+
+          if (json.success && json.mensaje) {
+            listaMensajesCache.push(json.mensaje);
+            renderSelectMensajesInd(json.mensaje.id);
+            renderSelectMensajes(json.mensaje.id);
+            inputNuevoMensajeInd.value = '';
+            showModalAlert('✅ Motivo de suspensión guardado en Google Sheets.', 'success');
+          } else {
+            const newId = String(listaMensajesCache.length + 1);
+            const newMsgObj = { id: newId, mensaje: txt };
+            listaMensajesCache.push(newMsgObj);
+            renderSelectMensajesInd(newId);
+            renderSelectMensajes(newId);
+            inputNuevoMensajeInd.value = '';
+            showModalAlert('✅ Motivo agregado a la sesión.', 'info');
+          }
+        }
+      } catch (err) {
+        showModalAlert('❌ Error al guardar mensaje: ' + err.message, 'danger');
+      } finally {
+        btnGuardarMensajeInd.disabled = false;
+        btnGuardarMensajeInd.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Guardar Motivo';
+      }
+    });
+  }
+
+  if (btnConfirmarSuspensionInd) {
+    btnConfirmarSuspensionInd.addEventListener('click', async () => {
+      if (!currentIndividualRecord) return;
+
+      const selectedIdMensaje = selectMensajeSuspensionInd ? selectMensajeSuspensionInd.value : null;
+      if (!selectedIdMensaje) {
+        showModalAlert('⚠️ Debes seleccionar o crear un motivo de suspensión.', 'warning');
+        return;
+      }
+
+      const mensajeObj = listaMensajesCache.find(m => String(m.id) === String(selectedIdMensaje));
+      const textoMensaje = mensajeObj ? mensajeObj.mensaje : 'La emisión de la constancia de trabajo para este expediente ha sido suspendida por la Dirección de Gestión de Talento Humano.';
+
+      const rowIndex = parseInt(currentIndividualRecord._rowIndex, 10);
+      const nombre = currentIndividualRecord.Nombre || currentIndividualRecord.nombre || 'Trabajador';
+
+      btnConfirmarSuspensionInd.disabled = true;
+      if (spinnerSuspensionInd) spinnerSuspensionInd.classList.remove('d-none');
+
+      try {
+        if (useDemoMode || !appScriptUrl) {
+          currentIndividualRecord.visible = false;
+          currentIndividualRecord.id_mensaje = selectedIdMensaje;
+          currentIndividualRecord.mensaje = textoMensaje;
+
+          const matchIdx = demoDatabase.findIndex(r => r._rowIndex === rowIndex || (r.Cedula && r.Cedula === currentIndividualRecord.Cedula));
+          if (matchIdx !== -1) {
+            demoDatabase[matchIdx].visible = false;
+            demoDatabase[matchIdx].id_mensaje = selectedIdMensaje;
+            demoDatabase[matchIdx].mensaje = textoMensaje;
+          }
+
+          renderIndividualResult(currentIndividualRecord);
+          if (modalSuspensionIndividual) modalSuspensionIndividual.hide();
+          showModalAlert(`⚠️ La constancia para ${nombre} ha sido SUSPENDIDA de forma individual.`, 'warning');
+        } else {
+          const json = await gasPost(appScriptUrl, {
+            action: 'updateRow',
+            usuario: appScriptUser,
+            api_key: appScriptApiKey,
+            rowIndex: rowIndex,
+            data: {
+              visible: "FALSE",
+              id_mensaje: selectedIdMensaje
+            }
+          });
+
+          if (json.success) {
+            currentIndividualRecord.visible = false;
+            currentIndividualRecord.id_mensaje = selectedIdMensaje;
+            currentIndividualRecord.mensaje = textoMensaje;
+
+            renderIndividualResult(currentIndividualRecord);
+            if (modalSuspensionIndividual) modalSuspensionIndividual.hide();
+            showModalAlert(`⚠️ La constancia para ${nombre} ha sido SUSPENDIDA en Google Sheets.`, 'warning');
+          } else {
+            showModalAlert('❌ Error al suspender expediente: ' + (json.error || json.message), 'danger');
+          }
+        }
+      } catch (err) {
+        showModalAlert('❌ Error al aplicar suspensión: ' + err.message, 'danger');
+      } finally {
+        btnConfirmarSuspensionInd.disabled = false;
+        if (spinnerSuspensionInd) spinnerSuspensionInd.classList.add('d-none');
+      }
+    });
   }
 
   // --- GENERAR PDF DESDE INDEX.HTML ---

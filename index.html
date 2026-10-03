@@ -138,7 +138,10 @@
                     <small class="text-muted">Información del trabajador registrada en la BD</small>
                   </div>
                 </div>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap align-items-center">
+                  <button class="btn btn-outline-danger btn-sm fw-bold d-none" id="btnToggleSuspensionInd">
+                    <i class="bi bi-slash-circle me-1"></i> Suspender Constancia
+                  </button>
                   <button class="btn btn-outline-primary btn-sm fw-bold" id="btnEditarIndividual">
                     <i class="bi bi-pencil-square me-1"></i> Editar
                   </button>
@@ -571,6 +574,54 @@ VER EN ARCHIVO `Code.gs` PARA EL CÓDIGO COMPLETO DEL BACKEND DE APPS SCRIPT
           <button type="button" class="btn btn-primary fw-bold" id="btnGuardarEdicionIndividual">
             <span class="spinner-border spinner-border-sm me-2 d-none" id="spinnerGuardarInd"></span>
             <i class="bi bi-check-circle me-1"></i> Guardar Cambios en Google Sheets
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE SUSPENSIÓN INDIVIDUAL -->
+  <div class="modal fade" id="modalSuspensionIndividual" tabindex="-1" aria-labelledby="modalSuspensionIndividualLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white py-3">
+          <h5 class="modal-title fw-bold" id="modalSuspensionIndividualLabel">
+            <i class="bi bi-slash-circle me-2"></i>Suspender Emisión de Constancia (Individual)
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="alert alert-warning py-2 small mb-3 border-start border-warning border-4 shadow-sm">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+            Esta acción suspenderá la generación de constancia únicamente para el expediente seleccionado.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-secondary mb-1">Expediente Afectado:</label>
+            <div class="p-2.5 bg-light rounded border fw-bold text-dark fs-6" id="indSuspensionNombreCedula">
+              <!-- Nombre y Cédula -->
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="selectMensajeSuspensionInd" class="form-label fw-bold small text-secondary mb-1">Motivo / Mensaje de Suspensión:</label>
+            <select class="form-select" id="selectMensajeSuspensionInd">
+              <!-- Se puebla dinámicamente con JS -->
+            </select>
+          </div>
+          <div class="mb-2">
+            <label for="inputNuevoMensajeInd" class="form-label fw-bold small text-secondary mb-1">O crear un nuevo motivo de suspensión (opcional):</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="inputNuevoMensajeInd" placeholder="Ej: Expediente en auditoría interna">
+              <button class="btn btn-outline-primary fw-bold" type="button" id="btnGuardarMensajeInd">
+                <i class="bi bi-plus-lg me-1"></i> Guardar Motivo
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-danger fw-bold shadow-sm" id="btnConfirmarSuspensionInd">
+            <span class="spinner-border spinner-border-sm me-2 d-none" id="spinnerSuspensionInd"></span>
+            <i class="bi bi-slash-circle me-1"></i> Confirmar Suspensión Individual
           </button>
         </div>
       </div>
